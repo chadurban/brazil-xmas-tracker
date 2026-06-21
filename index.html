@@ -136,8 +136,8 @@ const SCAN_DATA = {
   <!-- SEARCH -->
   <div class="section active" id="sec-search">
     <div class="card" id="builderCard">
-      <h2><span class="icon">🧩</span> Best Bookable Round-Trip (open-jaw OK)</h2>
-      <div class="sub">Cheapest layover-compliant outbound + return with ≥3 seats, each leg free to use a different gateway / US hub. Miles shown are total for all 3 of you.</div>
+      <h2><span class="icon">🏆</span> Current Best Option — door-to-door (CHS ↔ VIX)</h2>
+      <div class="sub">Cheapest layover-compliant ≥3-seat round-trip, costed all the way home: long-haul miles + CHS↔hub positioning + the GRU/GIG↔VIX hop, both directions, for all 3 of you.</div>
       <div id="builder"><div class="muted">Loading live availability…</div></div>
     </div>
 
@@ -326,7 +326,7 @@ function optHTML(r,win){
   const tax=r.routing&&r.routing.taxes?` · ~${r.routing.taxCur||'$'}${r.routing.taxes} tax`:'';
   return `<div class="opt ${win?'win':''}"><div class="top">
       <span class="path">${path} ${badge}</span><span class="miles">${(+r.miles).toLocaleString()} mi</span></div>
-    <div class="meta">${r.date} · <span class="badge ${seatCls}">${seats>=9?'9+':seats} seat${seats==1?'':'s'}</span> ${ns} · book via <b>${r.bookVia}</b>${tax}</div>
+    <div class="meta">${r.date} · <span class="badge ${seatCls}">${seats>=9?'9+':seats} seat${seats==1?'':'s'}</span> ${ns} · via <b>${r.bookVia}</b>${tax} <span class="muted">· +~$${r.extra?(r.extra.positioning+r.extra.vixHop):0}pp CHS+VIX</span></div>
     ${segLine(r)}</div>`;
 }
 function renderSearch(){
@@ -345,18 +345,24 @@ function bestLeg(dir,cab){
 }
 function renderBuilder(){
   if(!LIVE)return;
-  const blocks=[['premium','Premium Economy'],['business','Business']].map(([cab,name])=>{
-    const o=bestLeg('outbound',cab), r=bestLeg('return',cab);
-    if(!o||!r) return `<div class="opt"><div class="top"><span class="path">${name}</span><span class="miles muted">no 3-seat combo yet</span></div>
-      <div class="meta">No layover-compliant ${name.toLowerCase()} leg with ≥3 seats in ${!o?'outbound':''}${!o&&!r?' & ':''}${!r?'return':''} right now — the daily scan keeps hunting.</div></div>`;
-    const total=(+o.miles + +r.miles)*pax;
-    const vix=LIVE.vix&&LIVE.vix[0];
-    return `<div class="opt win"><div class="top"><span class="path">${name} — round-trip × 3</span><span class="miles">${total.toLocaleString()} mi</span></div>
-      <div class="meta"><b>Out:</b> ${o.routing?o.routing.path:o.o+'→'+o.d} ${o.date} (${(+o.miles).toLocaleString()} mi, ${o.seats>=9?'9+':o.seats} seats, ${o.bookVia})<br>
-      <b>Back:</b> ${r.routing?r.routing.path:r.o+'→'+r.d} ${r.date} (${(+r.miles).toLocaleString()} mi, ${r.seats>=9?'9+':r.seats} seats, ${r.bookVia})<br>
-      <b>VIX hop:</b> ${vix?`${vix.leg} ~${(+vix.yMiles).toLocaleString()} GOL Smiles or ~$60 cash`:'cash ~$60 ea'}</div></div>`;
+  const bo=LIVE.bestOption||{};
+  const pe=cash.premEcon.pp*pax, bz=cash.business.pp*pax;
+  const blocks=['premium','business'].map(cab=>{
+    const v=bo[cab], name=cab==='premium'?'Premium Economy':'Business';
+    if(!v) return `<div class="opt"><div class="top"><span class="path">${name} award</span><span class="miles muted">no ≥3-seat compliant RT yet</span></div>
+      <div class="meta">No layover-compliant ${name.toLowerCase()} round-trip with ≥3 seats in the window right now — the daily scan keeps hunting.</div></div>`;
+    const oe=v.outExtra, re=v.retExtra;
+    return `<div class="opt win"><div class="top"><span class="path">🏆 ${name} award — door-to-door × 3</span>
+        <span class="miles">${v.totalMiles.toLocaleString()} mi + ~$${v.totalExtraCash.toLocaleString()}</span></div>
+      <div class="meta">
+        <b>Out ${v.outDate}:</b> ${v.outPath}<br><span class="muted">${v.outLong} ${v.outMiles.toLocaleString()}mi · ${v.outSeats>=9?'9+':v.outSeats} seats · ${v.outVia}${oe.posLeg?` · +${oe.posLeg} ~$${oe.positioning}pp`:''} · +${oe.vixLeg} ~$${oe.vixHop}pp</span><br>
+        <b>Back ${v.retDate}:</b> ${v.retPath}<br><span class="muted">${v.retLong} ${v.retMiles.toLocaleString()}mi · ${v.retSeats>=9?'9+':v.retSeats} seats · ${v.retVia}${re.posLeg?` · +${re.posLeg} ~$${re.positioning}pp`:''} · +${re.vixLeg} ~$${re.vixHop}pp</span><br>
+        <b>True total (3 pax):</b> ${v.totalMiles.toLocaleString()} miles + ~$${v.totalExtraCash.toLocaleString()} cash (CHS↔hub positioning + VIX hops). Hop also bookable ~8–15K GOL Smiles pp.
+      </div></div>`;
   });
-  $('#builder').innerHTML=blocks.join('');
+  const cashLine=`<div class="opt"><div class="top"><span class="path">Cash booking (indicative)</span><span class="miles">~$${pe.toLocaleString()}–$${bz.toLocaleString()}</span></div>
+    <div class="meta">Prem econ ~$${pe.toLocaleString()} / business ~$${bz.toLocaleString()} for 3 (Christmas-peak estimate, long-haul only). As UR-as-cash ~${fmtK(Math.round(pe/0.015))}–${fmtK(Math.round(bz/0.015))} UR @1.5¢. <b>Real cash routing + positioning pending a Google Flights source.</b></div></div>`;
+  $('#builder').innerHTML=blocks.join('')+cashLine;
 }
 function renderVixLive(){
   if(!LIVE)return;
@@ -376,7 +382,8 @@ $('#f3seats').addEventListener('change',renderSearch); $('#flay').addEventListen
 fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   LIVE=d;
   const lu=new Date(d.lastUpdated);
-  $('#lastUpdated').textContent='Last scan: '+lu.toLocaleString()+`  ·  ${d.counts.outbound+d.counts.return} live award options`;
+  const partial=(d.errors&&d.errors.some(e=>/429|quota/.test(e)))?'  ·  ⚠ partial (daily API quota) — full refresh next scan':'';
+  $('#lastUpdated').textContent='Last scan: '+lu.toLocaleString()+`  ·  ${d.counts.outbound+d.counts.return} live award options`+partial;
   $('#engineVer').textContent='scan.py '+d.scannerVersion;
   $('#searchSub').innerHTML=`seats.aero · Dec 17 – Jan 4 · US hubs ↔ GRU/GIG · <b>${d.counts.outbound}</b> outbound / <b>${d.counts.return}</b> return options found.`;
   renderBuilder(); renderSearch(); renderVixLive(); renderLog();

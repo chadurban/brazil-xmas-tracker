@@ -30,7 +30,7 @@ US_HUBS = {"CHS","ATL","JFK","EWR","IAD","IAH","MIA","ORD","MCO","BOS","CLT","DF
 OUT_START, OUT_END = "2026-12-17", "2026-12-27"   # outbound depart window (+buffer)
 RET_START, RET_END = "2026-12-24", "2027-01-04"   # return depart window
 LAY_MIN, LAY_MAX = 150, 360                        # minutes
-CABINS = ["business", "premium", "economy"]
+CABINS = ["business", "premium"]   # economy is below Chad's premium-econ floor; dropped to conserve the 1000/day seats.aero quota
 # seats.aero source program codes relevant to US<->Brazil
 PROGRAMS = ["aeroplan","united","delta","aeromexico","american","alaska",
             "virginatlantic","flyingblue","lifemiles","smiles","azul"]
@@ -43,18 +43,54 @@ BOOK_VIA = {
     "lifemiles":"Citi/Cap One → LifeMiles (not UR/MR)","smiles":"GOL Smiles","azul":"Azul / UR→United"}
 CABKEY = {"business":"J","premium":"W","economy":"Y","first":"F"}
 
+# --- True door-to-door cost model (CHS <-> VIX) ---
+PAX = 3
+HOME = "CHS"
+# estimated one-way cash to position CHS <-> US hub (economy, per person, USD). Refine with a real fare source.
+POSITION_COST = {"ATL":110,"CLT":90,"IAD":110,"MCO":110,"PHL":120,"FLL":120,"MIA":130,
+                 "JFK":150,"EWR":150,"ORD":150,"DTW":150,"BOS":160,"IAH":170,"DFW":170,"LAX":230,"SFO":250}
+VIX_HOP_CASH = 80   # one-way gateway <-> VIX (GOL/Azul/LATAM economy, per person, USD)
+
+def leg_extra(direction, o, d):
+    """Per-person cash beyond the long-haul: CHS<->hub positioning (if not already home) + the VIX hop."""
+    if direction == "out":   # US hub -> gateway
+        pos = 0 if o == HOME else POSITION_COST.get(o, 150)
+        return pos + VIX_HOP_CASH, {"positioning":pos, "posLeg":(None if o==HOME else f"CHS-{o}"),
+                                    "vixHop":VIX_HOP_CASH, "vixLeg":f"{d}-VIX"}
+    else:                    # gateway -> US hub
+        pos = 0 if d == HOME else POSITION_COST.get(d, 150)
+        return pos + VIX_HOP_CASH, {"positioning":pos, "posLeg":(None if d==HOME else f"{d}-CHS"),
+                                    "vixHop":VIX_HOP_CASH, "vixLeg":f"VIX-{o}"}
+
+def _full_path_out(o):
+    core = o["routing"]["path"] if o.get("routing") else f'{o["o"]}-{o["d"]}'
+    return (("" if o["o"]==HOME else "CHS-") + core + "-VIX")
+
+def _full_path_ret(r):
+    core = r["routing"]["path"] if r.get("routing") else f'{r["o"]}-{r["d"]}'
+    return ("VIX-" + core + ("" if r["d"]==HOME else "-CHS"))
+
 errors = []
+REMAINING = None  # X-RateLimit-Remaining; seats.aero Pro cap is 1000 calls/day, resets 00:00 UTC
+
+def quota_low():
+    return REMAINING is not None and 0 <= REMAINING < 40
 
 def api(path, params=None):
+    global REMAINING
     url = f"https://seats.aero/partnerapi/{path}"
     if params: url += "?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers=HDR)
     for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
+                rem = r.headers.get("X-RateLimit-Remaining")
+                if rem is not None and rem.lstrip("-").isdigit(): REMAINING = int(rem)
                 return json.loads(r.read().decode("utf-8","replace"))
         except urllib.error.HTTPError as e:
-            if e.code in (429, 500, 502, 503) and attempt < 2:
+            if e.code == 429:
+                REMAINING = 0; errors.append(f"{path} HTTP 429 (daily quota exhausted)"); return None
+            if e.code in (500, 502, 503) and attempt < 2:
                 time.sleep(2 * (attempt+1)); continue
             errors.append(f"{path} HTTP {e.code}"); return None
         except Exception as ex:
@@ -94,6 +130,7 @@ def vet_trip_layovers(segs):
 
 def best_trip(avail_id, cabin):
     """Fetch trips for an availability id; return best routing dict for the cabin or None."""
+    if quota_low(): return None
     d = api(f"trips/{avail_id}")
     trips = (d.get("data") if isinstance(d, dict) else d) or []
     cands = [t for t in trips if (t.get("Cabin") or "").lower() == cabin]
@@ -128,6 +165,7 @@ def collect(direction):
         org_ok = lambda o: o in GATEWAYS; dst_ok = lambda d: d in US_HUBS
     found = []
     for source in PROGRAMS:
+        if quota_low(): errors.append("collect: stopped early (quota low)"); break
         for cabin in CABINS:
             ck = CABKEY[cabin]
             recs = bulk(source, cabin, o_reg, d_reg, start, end)
@@ -147,17 +185,19 @@ def collect(direction):
                 if key not in ded or seats > ded[key]["seats"]:
                     ded[key] = row
             kept = sorted(ded.values(), key=lambda x: int(x["miles"] or 1e9))
-            for k in kept[:6]:
+            for k in kept[:3]:
                 if k["direct"]:
                     k["routing"] = None  # nonstop, no layover concern
                 else:
                     k["routing"] = best_trip(k["id"], cabin)
+                k["extraPP"], k["extra"] = leg_extra(direction, k["o"], k["d"])
                 found.append(k)
     return found
 
 def collect_vix():
     ded = {}
     for source in VIX_PROGRAMS:
+        if quota_low(): break
         recs = bulk(source, "economy", "South America", "South America", OUT_START, RET_END)
         for r in recs:
             rt = r.get("Route", {})
@@ -174,7 +214,7 @@ def collect_vix():
 def _best_leg(rows, cab):
     c = [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 3
          and (r["direct"] or (r.get("routing") and r["routing"].get("layoverOK")))]
-    c.sort(key=lambda x: int(x["miles"] or 9e9))
+    c.sort(key=lambda x: (int(x["miles"] or 9e9), -(x["seats"] or 0)))  # cheapest, then most seats
     return c[0] if c else None
 
 def _path(r):
@@ -202,6 +242,22 @@ def build_alerts(outb, retb, vix):
     new = {"type": "green", "message": "".join(p), "time": datetime.now().strftime("%Y-%m-%d %I:%M %p")}
     return [new] + prior[:6]
 
+def build_best_option(outb, retb):
+    """Cheapest layover-compliant, >=3-seat round-trip per cabin, costed door-to-door CHS<->VIX for all pax."""
+    res = {}
+    for cab in ["premium", "business"]:
+        o, r = _best_leg(outb, cab), _best_leg(retb, cab)
+        if o and r:
+            res[cab] = {
+                "outPath": _full_path_out(o), "outLong": _path(o), "outDate": o["date"],
+                "outMiles": int(o["miles"]), "outSeats": o["seats"], "outVia": o["bookVia"], "outExtra": o["extra"],
+                "retPath": _full_path_ret(r), "retLong": _path(r), "retDate": r["date"],
+                "retMiles": int(r["miles"]), "retSeats": r["seats"], "retVia": r["bookVia"], "retExtra": r["extra"],
+                "totalMiles": (int(o["miles"]) + int(r["miles"])) * PAX,
+                "totalExtraCash": (o["extraPP"] + r["extraPP"]) * PAX, "pax": PAX,
+            }
+    return res
+
 def main():
     dry = "--dry" in sys.argv
     t0 = time.time()
@@ -216,7 +272,8 @@ def main():
         "scannerVersion": "0.3.0",
         "window": {"outDepart":"Dec 17-26","retDepart":"Dec 26 - Jan 4","nights":"7-15"},
         "counts": {"outbound":len(outb),"return":len(retb),"vix":len(vix)},
-        "outbound": outb, "return": retb, "vix": vix, "alerts": alerts, "errors": errors,
+        "outbound": outb, "return": retb, "vix": vix,
+        "bestOption": build_best_option(outb, retb), "alerts": alerts, "errors": errors,
         "scanSeconds": round(time.time()-t0,1),
     }
     if dry:
