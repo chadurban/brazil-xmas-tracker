@@ -7,7 +7,7 @@
     "nights": "7-15"
   },
   "counts": {
-    "outbound": 23,
+    "outbound": 17,
     "return": 12,
     "vix": 0
   },
@@ -368,132 +368,6 @@
         "vixLeg": "GRU-VIX"
       },
       "bookVia": "GOL Smiles"
-    },
-    {
-      "id": "38b1NY3mj6oqDg1zTrqXbfDsvde",
-      "source": "smiles",
-      "cabin": "premium",
-      "o": "MIA",
-      "d": "GRU",
-      "date": "2026-12-18",
-      "miles": "588000",
-      "seats": 7,
-      "direct": true,
-      "airlines": "AA",
-      "routing": null,
-      "extraPP": 210,
-      "extra": {
-        "positioning": 130,
-        "posLeg": "CHS-MIA",
-        "vixHop": 80,
-        "vixLeg": "GRU-VIX"
-      },
-      "bookVia": "GOL Smiles"
-    },
-    {
-      "id": "38dPaUK1E81hzYvY15JQivrky8Z",
-      "source": "smiles",
-      "cabin": "premium",
-      "o": "MIA",
-      "d": "GRU",
-      "date": "2026-12-19",
-      "miles": "588000",
-      "seats": 7,
-      "direct": true,
-      "airlines": "AA",
-      "routing": null,
-      "extraPP": 210,
-      "extra": {
-        "positioning": 130,
-        "posLeg": "CHS-MIA",
-        "vixHop": 80,
-        "vixLeg": "GRU-VIX"
-      },
-      "bookVia": "GOL Smiles"
-    },
-    {
-      "id": "38gWt2bug4p8kBXqoSnxo4SBWbn",
-      "source": "smiles",
-      "cabin": "premium",
-      "o": "MIA",
-      "d": "GRU",
-      "date": "2026-12-20",
-      "miles": "588000",
-      "seats": 7,
-      "direct": true,
-      "airlines": "AA",
-      "routing": null,
-      "extraPP": 210,
-      "extra": {
-        "positioning": 130,
-        "posLeg": "CHS-MIA",
-        "vixHop": 80,
-        "vixLeg": "GRU-VIX"
-      },
-      "bookVia": "GOL Smiles"
-    },
-    {
-      "id": "38jP5UdfGGklWHG7yVUEj03BHMj",
-      "source": "smiles",
-      "cabin": "premium",
-      "o": "MIA",
-      "d": "GRU",
-      "date": "2026-12-21",
-      "miles": "588000",
-      "seats": 7,
-      "direct": true,
-      "airlines": "AA",
-      "routing": null,
-      "extraPP": 210,
-      "extra": {
-        "positioning": 130,
-        "posLeg": "CHS-MIA",
-        "vixHop": 80,
-        "vixLeg": "GRU-VIX"
-      },
-      "bookVia": "GOL Smiles"
-    },
-    {
-      "id": "38lusVBHkEbMJpGywr3f5F3B4ZH",
-      "source": "smiles",
-      "cabin": "premium",
-      "o": "MIA",
-      "d": "GRU",
-      "date": "2026-12-22",
-      "miles": "588000",
-      "seats": 7,
-      "direct": true,
-      "airlines": "AA",
-      "routing": null,
-      "extraPP": 210,
-      "extra": {
-        "positioning": 130,
-        "posLeg": "CHS-MIA",
-        "vixHop": 80,
-        "vixLeg": "GRU-VIX"
-      },
-      "bookVia": "GOL Smiles"
-    },
-    {
-      "id": "38oiqLPuWTDcAsyYcII8V5tTK7C",
-      "source": "smiles",
-      "cabin": "premium",
-      "o": "MIA",
-      "d": "GRU",
-      "date": "2026-12-23",
-      "miles": "588000",
-      "seats": 7,
-      "direct": true,
-      "airlines": "AA",
-      "routing": null,
-      "extraPP": 210,
-      "extra": {
-        "positioning": 130,
-        "posLeg": "CHS-MIA",
-        "vixHop": 80,
-        "vixLeg": "GRU-VIX"
-      },
-      "bookVia": "GOL Smiles"
     }
   ],
   "return": [
@@ -753,34 +627,36 @@
   "vix": [],
   "bestOption": {
     "premium": {
-      "tier": "ideal",
-      "caveats": [],
-      "outPath": "CHS-MIA-GRU-VIX",
-      "outLong": "MIA-GRU",
-      "outDate": "2026-12-18",
-      "outMiles": 588000,
-      "outSeats": 7,
-      "outVia": "GOL Smiles",
+      "tier": "lowest",
+      "caveats": [
+        "out 2 seat"
+      ],
+      "outPath": "CHS-JFK-GIG-VIX",
+      "outLong": "JFK-GIG",
+      "outDate": "2026-12-21",
+      "outMiles": 113300,
+      "outSeats": 2,
+      "outVia": "UR \u2192 Virgin Atlantic (Delta metal)",
       "outExtra": {
-        "positioning": 130,
-        "posLeg": "CHS-MIA",
+        "positioning": 150,
+        "posLeg": "CHS-JFK",
         "vixHop": 80,
-        "vixLeg": "GRU-VIX"
+        "vixLeg": "GIG-VIX"
       },
-      "retPath": "VIX-GIG-JFK-CHS",
-      "retLong": "GIG-JFK",
-      "retDate": "2026-12-25",
-      "retMiles": 110000,
-      "retSeats": 5,
+      "retPath": "VIX-GRU-JFK-CHS",
+      "retLong": "GRU-JFK",
+      "retDate": "2026-12-28",
+      "retMiles": 115000,
+      "retSeats": 9,
       "retVia": "UR \u2192 Virgin Atlantic (Delta metal)",
       "retExtra": {
         "positioning": 150,
         "posLeg": "JFK-CHS",
         "vixHop": 80,
-        "vixLeg": "VIX-GIG"
+        "vixLeg": "VIX-GRU"
       },
-      "totalMiles": 2094000,
-      "totalExtraCash": 1320,
+      "totalMiles": 684900,
+      "totalExtraCash": 1380,
       "pax": 3,
       "nights": 7
     }
@@ -874,13 +750,13 @@
   "history": [
     {
       "date": "2026-06-21",
-      "premMiles": 2094000,
+      "premMiles": 684900,
       "bizMiles": null,
       "firstMiles": null,
       "premCash": 12847,
       "bizCash": 17737,
       "firstCash": null,
-      "outN": 23,
+      "outN": 17,
       "retN": 12
     }
   ]

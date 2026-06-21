@@ -206,6 +206,8 @@ def collect(direction, prev_rows=None):
                 if not r.get(f"{ck}Available"): continue
                 seats = r.get(f"{ck}RemainingSeats") or 0
                 if seats < 1: continue  # drop phantom/0-seat cache rows
+                mi = int(r.get(f"{ck}MileageCost") or 0)
+                if mi <= 0 or mi > MAX_MILES.get(cabin, 9_999_999): continue  # drop 0-priced + non-saver dynamic garbage
                 row = {"id":r.get("ID"),"source":source,"cabin":cabin,"o":o,"d":d,
                     "date":r.get("Date"),"miles":r.get(f"{ck}MileageCost"),
                     "seats":seats,"direct":r.get(f"{ck}Direct"),"airlines":r.get(f"{ck}Airlines")}
@@ -262,6 +264,7 @@ def _path(r):
 
 MIN_NIGHTS, MAX_NIGHTS = 7, 15
 MAX_STOPS = 0   # 0 = nonstop international only (book short CHS<->hub positioning + VIX hops separately)
+MAX_MILES = {"economy": 90000, "premium": 140000, "business": 220000, "first": 350000}  # drop non-saver/dynamic garbage (one-way)
 
 def _nights(a, b):
     try:
