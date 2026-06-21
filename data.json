@@ -3667,8 +3667,10 @@
       "date": "2026-06-21",
       "premMiles": 540000,
       "bizMiles": 741600,
+      "firstMiles": null,
       "premCash": 12847,
       "bizCash": 17737,
+      "firstCash": null,
       "outN": 56,
       "retN": 32
     }

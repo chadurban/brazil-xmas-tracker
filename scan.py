@@ -30,7 +30,7 @@ US_HUBS = {"CHS","ATL","JFK","EWR","IAD","IAH","MIA","ORD","MCO","BOS","CLT","DF
 OUT_START, OUT_END = "2026-12-17", "2026-12-27"   # outbound depart window (+buffer)
 RET_START, RET_END = "2026-12-24", "2027-01-04"   # return depart window
 LAY_MIN, LAY_MAX = 150, 360                        # minutes
-CABINS = ["business", "premium"]   # economy is below Chad's premium-econ floor; dropped to conserve the 1000/day seats.aero quota
+CABINS = ["business", "premium", "first"]   # economy below Chad's floor; dropped to conserve the 1000/day seats.aero quota
 # seats.aero source program codes relevant to US<->Brazil
 PROGRAMS = ["aeroplan","united","delta","aeromexico","american","alaska",
             "virginatlantic","flyingblue","lifemiles","smiles","azul"]
@@ -334,7 +334,7 @@ def build_alerts(outb, retb, vix):
 def build_best_option(outb, retb):
     """Per cabin: the ideal valid pair (>=3 seats, bookable, compliant); else the lowest-priced valid-length pair (splurge ref)."""
     res = {}
-    for cab in ["premium", "business"]:
+    for cab in ["premium", "business", "first"]:
         bp, tier = _valid_pair(outb, retb, cab), "ideal"
         if not bp:
             bp, tier = _lowest_pair(outb, retb, cab), "lowest"
@@ -356,8 +356,10 @@ def history_snapshot(best_opt, best_cash, outb, retb):
     return {"date": date.today().isoformat(),
             "premMiles": (best_opt.get("premium") or {}).get("totalMiles"),
             "bizMiles": (best_opt.get("business") or {}).get("totalMiles"),
+            "firstMiles": (best_opt.get("first") or {}).get("totalMiles"),
             "premCash": (bc.get("premium") or {}).get("doorToDoorTotal"),
             "bizCash": (bc.get("business") or {}).get("doorToDoorTotal"),
+            "firstCash": (bc.get("first") or {}).get("doorToDoorTotal"),
             "outN": len(outb), "retN": len(retb)}
 
 def update_history(snap):
