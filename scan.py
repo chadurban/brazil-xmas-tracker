@@ -25,7 +25,7 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 HDR = {"Partner-Authorization": KEY, "Accept": "application/json", "User-Agent": UA}
 
 # --- Trip config ---
-GATEWAYS = {"GRU", "GIG"}
+GATEWAYS = {"GRU", "GIG", "VCP", "CNF"}   # Brazil hubs w/ US nonstops + frequent VIX hops (São Paulo, Rio, Campinas, Belo Horizonte)
 US_HUBS = {"CHS","ATL","JFK","EWR","IAD","IAH","MIA","ORD","MCO","BOS","CLT","DFW","LAX","FLL","PHL","DTW","SFO"}
 OUT_START, OUT_END = "2026-12-17", "2026-12-27"   # outbound depart window (+buffer)
 RET_START, RET_END = "2026-12-24", "2027-01-04"   # return depart window
@@ -217,8 +217,10 @@ def collect(direction, prev_rows=None):
             for k in kept[:3]:
                 if k["direct"]:
                     k["routing"] = None  # nonstop, no layover concern
-                else:
+                elif MAX_STOPS >= 1:
                     k["routing"] = best_trip(k["id"], cabin)
+                else:
+                    continue   # nonstop-only mode: skip connecting records (also saves a trips API call)
                 k["extraPP"], k["extra"] = leg_extra(direction, k["o"], k["d"])
                 k["bookEase"] = BOOK_EASE.get(source, 2)
                 k["stops"] = row_stops(k)
@@ -259,7 +261,7 @@ def _path(r):
     return f'{r["o"]}-{r["d"]}'
 
 MIN_NIGHTS, MAX_NIGHTS = 7, 15
-MAX_STOPS = 1   # max stops on the international long-haul (book short positioning/VIX legs separately)
+MAX_STOPS = 0   # 0 = nonstop international only (book short CHS<->hub positioning + VIX hops separately)
 
 def _nights(a, b):
     try:

@@ -1,13 +1,13 @@
 [
   {
     "date": "2026-06-21",
-    "premMiles": 540000,
-    "bizMiles": 741600,
+    "premMiles": 2094000,
+    "bizMiles": null,
     "firstMiles": null,
     "premCash": 12847,
     "bizCash": 17737,
     "firstCash": null,
-    "outN": 56,
-    "retN": 32
+    "outN": 23,
+    "retN": 12
   }
 ]
