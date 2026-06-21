@@ -1,6 +1,6 @@
 {
   "lastUpdated": "2026-06-21T13:08:29Z",
-  "scannerVersion": "0.3.0",
+  "scannerVersion": "0.4.0",
   "window": {
     "outDepart": "Dec 17-26",
     "retDepart": "Dec 26 - Jan 4",
@@ -4508,5 +4508,50 @@
     "availability HTTP 429",
     "availability HTTP 429"
   ],
-  "scanSeconds": 174.1
+  "scanSeconds": 174.1,
+  "bestCash": {
+    "source": "SerpApi Google Flights",
+    "asOf": "2026-06-21",
+    "dates": "2026-12-19 to 2026-12-30",
+    "pax": 3,
+    "searches": 4,
+    "errors": [],
+    "cabins": {
+      "premium": {
+        "priceRaw": 12367,
+        "durationMin": 865,
+        "stops": 1,
+        "path": "CHS-JFK-GIG",
+        "layoverOK": true,
+        "layovers": [
+          152
+        ],
+        "carriers": [
+          "Delta"
+        ],
+        "gateway": "GIG",
+        "totalForPax": 12367,
+        "vixRtPerPax": 160,
+        "doorToDoorTotal": 12847
+      },
+      "business": {
+        "priceRaw": 17257,
+        "durationMin": 679,
+        "stops": 1,
+        "path": "CHS-MIA-GIG",
+        "layoverOK": false,
+        "layovers": [
+          56
+        ],
+        "carriers": [
+          "American"
+        ],
+        "gateway": "GIG",
+        "totalForPax": 17257,
+        "vixRtPerPax": 160,
+        "doorToDoorTotal": 17737
+      }
+    },
+    "fetchedAt": "2026-06-21T14:01:18Z"
+  }
 }
