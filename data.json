@@ -4553,5 +4553,16 @@
       }
     },
     "fetchedAt": "2026-06-21T14:01:18Z"
-  }
+  },
+  "history": [
+    {
+      "date": "2026-06-21",
+      "premMiles": 360000,
+      "bizMiles": null,
+      "premCash": 12847,
+      "bizCash": 17737,
+      "outN": 65,
+      "retN": 38
+    }
+  ]
 }

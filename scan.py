@@ -16,7 +16,7 @@ Constraints (Chad's prefs):
   - Layover 150-360 min, same-airport connections only (no LGA->JFK silliness)
 """
 import json, sys, os, time, urllib.request, urllib.error, urllib.parse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SECRETS = "/Users/admin/Library/CloudStorage/GoogleDrive-urbanc@acba.edu/.shortcut-targets-by-id/1Tc-st1PSSbOMdWmS2DRk_5DLXRb8WpFb/ATS1/Operations/Claude/Personal/.flight-scanner-secrets.json"
@@ -281,6 +281,36 @@ def build_best_option(outb, retb):
             }
     return res
 
+def history_snapshot(best_opt, best_cash, outb, retb):
+    bc = (best_cash or {}).get("cabins", {})
+    return {"date": date.today().isoformat(),
+            "premMiles": (best_opt.get("premium") or {}).get("totalMiles"),
+            "bizMiles": (best_opt.get("business") or {}).get("totalMiles"),
+            "premCash": (bc.get("premium") or {}).get("doorToDoorTotal"),
+            "bizCash": (bc.get("business") or {}).get("doorToDoorTotal"),
+            "outN": len(outb), "retN": len(retb)}
+
+def update_history(snap):
+    path = os.path.join(HERE, "history.json")
+    try: hist = json.load(open(path))
+    except Exception: hist = []
+    hist = [h for h in hist if h.get("date") != snap["date"]]   # one entry per day
+    hist.append(snap)
+    hist = hist[-150:]
+    with open(path, "w") as f: json.dump(hist, f, indent=2)
+    return hist
+
+def inject_into_html(data, hist):
+    import re
+    path = os.path.join(HERE, "index.html")
+    html = open(path).read()
+    for bid, payload in [("live-data", json.dumps(data, separators=(",", ":"))),
+                         ("history-data", json.dumps(hist, separators=(",", ":")))]:
+        pat = re.compile(r'(<script id="' + re.escape(bid) + r'" type="application/json">).*?(</script>)', re.DOTALL)
+        if pat.search(html):
+            html = pat.sub(lambda m: m.group(1) + payload + m.group(2), html, count=1)
+    with open(path, "w") as f: f.write(html)
+
 def main():
     dry = "--dry" in sys.argv
     t0 = time.time()
@@ -297,13 +327,14 @@ def main():
             best_cash = _cash.best_cash()   # real SerpApi cash if keyed+stale, else cached/None
         except Exception as e:
             errors.append(f"cash: {type(e).__name__}")
+    best_opt = build_best_option(outb, retb)
     data = {
         "lastUpdated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "scannerVersion": "0.4.0",
         "window": {"outDepart":"Dec 17-26","retDepart":"Dec 26 - Jan 4","nights":"7-15"},
         "counts": {"outbound":len(outb),"return":len(retb),"vix":len(vix)},
         "outbound": outb, "return": retb, "vix": vix,
-        "bestOption": build_best_option(outb, retb), "bestCash": best_cash,
+        "bestOption": best_opt, "bestCash": best_cash,
         "alerts": alerts, "errors": errors, "scanSeconds": round(time.time()-t0,1),
     }
     if dry:
@@ -319,9 +350,13 @@ def main():
         for v in vix[:8]:
             print(f"  {v['source']:7} {v['leg']} {v['date']} {v['yMiles']}mi seats={v['ySeats']}")
     else:
+        snap = history_snapshot(best_opt, best_cash, outb, retb)
+        hist = update_history(snap)
+        data["history"] = hist
         with open(os.path.join(HERE, "data.json"), "w") as f:
             json.dump(data, f, indent=2)
-        print(f"wrote data.json: {data['counts']} in {data['scanSeconds']}s; errors={errors}")
+        inject_into_html(data, hist)
+        print(f"wrote data.json + injected in-page: {data['counts']}, history {len(hist)}d; errors={errors}")
 
 if __name__ == "__main__":
     main()
