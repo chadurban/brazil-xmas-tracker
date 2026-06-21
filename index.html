@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Brazil Christmas 2026 Flight Tracker</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="./chart.umd.min.js"></script>
 <style>
   :root{
     --bg:#0f1117; --surface:#1a1d27; --surface2:#242836; --border:#2e3347;
@@ -284,6 +284,7 @@ $$('#cabinToggle .toggle-btn').forEach(b=>b.addEventListener('click',()=>{
   cabinSel=b.dataset.cabin; renderVS(cabinSel); drawUR();}));
 let urChart;
 function drawUR(){
+  if(typeof Chart==='undefined')return;
   const ctx=$('#urChart').getContext('2d'); if(urChart)urChart.destroy();
   urChart=new Chart(ctx,{type:'bar',data:{labels:['Transfer','Cash @2¢','Cash @1.5¢','Cash @1¢'],
     datasets:[{data:[xferUR[cabinSel],urCash(cabinSel,2),urCash(cabinSel,1.5),urCash(cabinSel,1)],
@@ -427,6 +428,7 @@ function renderHistory(){
   if(!pts.length){ $('#histNote').innerHTML='History builds from the first scan onward — check back in a few days to see the trend.'; }
   else { const last=pts[pts.length-1];
     $('#histNote').innerHTML=`${pts.length} day${pts.length==1?'':'s'} tracked. Latest ${histMetric==='prem'?'premium econ':'business'} for 3: ${last[mKey]?Math.round(last[mKey]/1000)+'K mi award':'—'} · ${last[cKey]?'$'+last[cKey].toLocaleString()+' cash':'—'}.`; }
+  if(typeof Chart==='undefined')return;
   histChart=new Chart(canvas.getContext('2d'),{type:'line',
     data:{labels,datasets:[
       {label:'Award (K miles)',data:miles,borderColor:'#2ecc71',backgroundColor:'rgba(46,204,113,0.10)',yAxisID:'y',tension:0.3,spanGaps:true,pointRadius:3,fill:true},
