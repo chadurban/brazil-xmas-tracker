@@ -4439,6 +4439,8 @@
   "vix": [],
   "bestOption": {
     "premium": {
+      "tier": "ideal",
+      "caveats": [],
       "outPath": "CHS-MCO-BOG-GRU-VIX",
       "outLong": "MCO-BOG-GRU",
       "outDate": "2026-12-19",
@@ -4467,6 +4469,42 @@
       "totalExtraCash": 1260,
       "pax": 3,
       "nights": 9
+    },
+    "business": {
+      "tier": "lowest",
+      "caveats": [
+        "out 1 seat",
+        "out needs Alaska miles (not UR/MR)",
+        "back layover off"
+      ],
+      "outPath": "CHS-MIA-GRU-VIX",
+      "outLong": "MIA-GRU",
+      "outDate": "2026-12-24",
+      "outMiles": 50000,
+      "outSeats": 1,
+      "outVia": "Alaska miles (not UR/MR)",
+      "outExtra": {
+        "positioning": 130,
+        "posLeg": "CHS-MIA",
+        "vixHop": 80,
+        "vixLeg": "GRU-VIX"
+      },
+      "retPath": "VIX-GRU-MEX-MTY-MCO-CHS",
+      "retLong": "GRU-MEX-MTY-MCO",
+      "retDate": "2026-12-31",
+      "retMiles": 130000,
+      "retSeats": 9,
+      "retVia": "UR \u2192 Flying Blue / Virgin",
+      "retExtra": {
+        "positioning": 110,
+        "posLeg": "MCO-CHS",
+        "vixHop": 80,
+        "vixLeg": "VIX-GRU"
+      },
+      "totalMiles": 540000,
+      "totalExtraCash": 1200,
+      "pax": 3,
+      "nights": 7
     }
   },
   "alerts": [
@@ -4559,7 +4597,7 @@
     {
       "date": "2026-06-21",
       "premMiles": 540000,
-      "bizMiles": null,
+      "bizMiles": 540000,
       "premCash": 12847,
       "bizCash": 17737,
       "outN": 65,

@@ -176,17 +176,25 @@ def best_trip(avail_id, cabin):
             "route":route,"layovers":lays,"layoverOK":ok,
             "path":"-".join([route[0]["from"]] + [r["to"] for r in route]) if route else ""}
 
-def collect(direction):
-    """direction: 'out' (US->BR) or 'ret' (BR->US)."""
+def collect(direction, prev_rows=None):
+    """direction: 'out' (US->BR) or 'ret' (BR->US). Reuses prev_rows per-source when the daily quota is exhausted."""
     if direction == "out":
         o_reg, d_reg, start, end = "North America", "South America", OUT_START, OUT_END
         org_ok = lambda o: o in US_HUBS; dst_ok = lambda d: d in GATEWAYS
     else:
         o_reg, d_reg, start, end = "South America", "North America", RET_START, RET_END
         org_ok = lambda o: o in GATEWAYS; dst_ok = lambda d: d in US_HUBS
+    prev_by_src = {}
+    for r in (prev_rows or []):
+        prev_by_src.setdefault(r.get("source"), []).append(r)
     found = []
     for source in PROGRAMS:
-        if quota_low(): errors.append("collect: stopped early (quota low)"); break
+        if quota_low():
+            reuse = [dict(r, cached=True) for r in prev_by_src.get(source, [])]
+            if reuse:
+                found += reuse
+                errors.append(f"{source} {direction}: quota low → reused {len(reuse)} cached")
+            continue
         for cabin in CABINS:
             ck = CABKEY[cabin]
             recs = bulk(source, cabin, o_reg, d_reg, start, end)
@@ -217,10 +225,10 @@ def collect(direction):
                 found.append(k)
     return found
 
-def collect_vix():
+def collect_vix(prev=None):
     ded = {}
     for source in VIX_PROGRAMS:
-        if quota_low(): break
+        if quota_low(): continue
         recs = bulk(source, "economy", "South America", "South America", OUT_START, RET_END)
         for r in recs:
             rt = r.get("Route", {})
@@ -232,7 +240,10 @@ def collect_vix():
                        "yMiles":r.get("YMileageCost"),"ySeats":seats}
                 if key not in ded or seats > ded[key]["ySeats"]:
                     ded[key] = row
-    return sorted(ded.values(), key=lambda x: int(x["yMiles"] or 1e9))
+    out = sorted(ded.values(), key=lambda x: int(x["yMiles"] or 1e9))
+    if not out and prev:                       # all sources quota-skipped → reuse cached VIX
+        return [dict(r, cached=True) for r in prev]
+    return out
 
 def _best_leg(rows, cab):
     c = [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 3 and bookable(r)
@@ -270,6 +281,30 @@ def _valid_pair(outb, retb, cab):
                 best = (cost, o, r, n)
     return best  # (cost, o, r, nights) or None
 
+def _lowest_pair(outb, retb, cab):
+    """Cheapest-by-miles valid-length pair, relaxing seats(>=1)/bookability/compliance — splurge reference."""
+    def legs(rows):
+        return [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 1 and (r["direct"] or r.get("routing"))]
+    outs, rets = legs(outb), legs(retb)
+    best = None
+    for o in outs:
+        for r in rets:
+            n = _nights(o["date"], r["date"])
+            if n < MIN_NIGHTS or n > MAX_NIGHTS:
+                continue
+            m = int(o["miles"] or 9e9) + int(r["miles"] or 9e9)
+            if best is None or m < best[0]:
+                best = (m, o, r, n)
+    return best
+
+def _caveats(o, r):
+    out = []
+    for tag, x in [("out", o), ("back", r)]:
+        if (x["seats"] or 0) < 3: out.append(f"{tag} {x['seats'] or 0} seat")
+        if not bookable(x): out.append(f"{tag} needs {x['bookVia']}")
+        if not (x["direct"] or (x.get("routing") and x["routing"].get("layoverOK"))): out.append(f"{tag} layover off")
+    return out
+
 def build_alerts(outb, retb, vix):
     try:
         prior = json.load(open(os.path.join(HERE, "data.json"))).get("alerts", [])
@@ -293,13 +328,16 @@ def build_alerts(outb, retb, vix):
     return [new] + prior[:6]
 
 def build_best_option(outb, retb):
-    """Cheapest layover-compliant, >=3-seat round-trip per cabin, costed door-to-door CHS<->VIX for all pax."""
+    """Per cabin: the ideal valid pair (>=3 seats, bookable, compliant); else the lowest-priced valid-length pair (splurge ref)."""
     res = {}
     for cab in ["premium", "business"]:
-        bp = _valid_pair(outb, retb, cab)
+        bp, tier = _valid_pair(outb, retb, cab), "ideal"
+        if not bp:
+            bp, tier = _lowest_pair(outb, retb, cab), "lowest"
         if bp:
             _, o, r, n = bp
             res[cab] = {
+                "tier": tier, "caveats": _caveats(o, r) if tier == "lowest" else [],
                 "outPath": _full_path_out(o), "outLong": _path(o), "outDate": o["date"],
                 "outMiles": int(o["miles"]), "outSeats": o["seats"], "outVia": o["bookVia"], "outExtra": o["extra"],
                 "retPath": _full_path_ret(r), "retLong": _path(r), "retDate": r["date"],
@@ -342,9 +380,13 @@ def inject_into_html(data, hist):
 def main():
     dry = "--dry" in sys.argv
     t0 = time.time()
-    outb = collect("out")
-    retb = collect("ret")
-    vix = collect_vix()
+    try:
+        _prev = json.load(open(os.path.join(HERE, "data.json")))
+    except Exception:
+        _prev = {}
+    outb = collect("out", _prev.get("outbound"))
+    retb = collect("ret", _prev.get("return"))
+    vix = collect_vix(_prev.get("vix"))
     for row in outb + retb:
         row["bookVia"] = BOOK_VIA.get(row["source"], row["source"])
     alerts = [] if dry else build_alerts(outb, retb, vix)

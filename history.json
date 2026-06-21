@@ -2,7 +2,7 @@
   {
     "date": "2026-06-21",
     "premMiles": 540000,
-    "bizMiles": null,
+    "bizMiles": 540000,
     "premCash": 12847,
     "bizCash": 17737,
     "outN": 65,
