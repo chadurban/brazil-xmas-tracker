@@ -360,8 +360,9 @@ function renderBuilder(){
         <b>True total (3 pax):</b> ${v.totalMiles.toLocaleString()} miles + ~$${v.totalExtraCash.toLocaleString()} cash (CHS↔hub positioning + VIX hops). Hop also bookable ~8–15K GOL Smiles pp.
       </div></div>`;
   });
-  const cashLine=`<div class="opt"><div class="top"><span class="path">Cash booking (indicative)</span><span class="miles">~$${pe.toLocaleString()}–$${bz.toLocaleString()}</span></div>
-    <div class="meta">Prem econ ~$${pe.toLocaleString()} / business ~$${bz.toLocaleString()} for 3 (Christmas-peak estimate, long-haul only). As UR-as-cash ~${fmtK(Math.round(pe/0.015))}–${fmtK(Math.round(bz/0.015))} UR @1.5¢. <b>Real cash routing + positioning pending a Google Flights source.</b></div></div>`;
+  const vixRT=160, peDD=(cash.premEcon.pp+vixRT)*pax, bzDD=(cash.business.pp+vixRT)*pax;
+  const cashLine=`<div class="opt"><div class="top"><span class="path">💵 Best Cash Option — door-to-door × 3 (estimate)</span><span class="miles">~$${peDD.toLocaleString()}–$${bzDD.toLocaleString()}</span></div>
+    <div class="meta"><b>Prem econ ~$${peDD.toLocaleString()}</b> / business ~$${bzDD.toLocaleString()} for 3 — a CHS↔GRU cash through-fare already bundles US positioning, plus ~$160/pp round-trip VIX hops (Christmas-peak estimate). As UR-as-cash that's ~${fmtK(Math.round(peDD/0.015))}–${fmtK(Math.round(bzDD/0.015))} UR @1.5¢, so the <b>premium award (~360K mi) beats burning UR as cash</b>. ⚠ Long-haul cash is an estimate — real Google-Flights pricing needs an API key (Google blocks scraping).</div></div>`;
   $('#builder').innerHTML=blocks.join('')+cashLine;
 }
 function renderVixLive(){
