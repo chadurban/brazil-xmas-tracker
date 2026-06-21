@@ -4441,9 +4441,9 @@
     "premium": {
       "outPath": "CHS-MCO-BOG-GRU-VIX",
       "outLong": "MCO-BOG-GRU",
-      "outDate": "2026-12-20",
+      "outDate": "2026-12-19",
       "outMiles": 65000,
-      "outSeats": 9,
+      "outSeats": 5,
       "outVia": "UR/MR \u2192 Virgin Atlantic",
       "outExtra": {
         "positioning": 110,
@@ -4451,21 +4451,22 @@
         "vixHop": 80,
         "vixLeg": "GRU-VIX"
       },
-      "retPath": "VIX-GRU-ORD-CHS",
-      "retLong": "GRU-ORD",
-      "retDate": "2026-12-24",
-      "retMiles": 55000,
+      "retPath": "VIX-GRU-JFK-CHS",
+      "retLong": "GRU-JFK",
+      "retDate": "2026-12-28",
+      "retMiles": 115000,
       "retSeats": 9,
-      "retVia": "UR \u2192 United",
+      "retVia": "UR \u2192 Virgin Atlantic (Delta metal)",
       "retExtra": {
         "positioning": 150,
-        "posLeg": "ORD-CHS",
+        "posLeg": "JFK-CHS",
         "vixHop": 80,
         "vixLeg": "VIX-GRU"
       },
-      "totalMiles": 360000,
+      "totalMiles": 540000,
       "totalExtraCash": 1260,
-      "pax": 3
+      "pax": 3,
+      "nights": 9
     }
   },
   "alerts": [
@@ -4557,7 +4558,7 @@
   "history": [
     {
       "date": "2026-06-21",
-      "premMiles": 360000,
+      "premMiles": 540000,
       "bizMiles": null,
       "premCash": 12847,
       "bizCash": 17737,

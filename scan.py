@@ -245,21 +245,48 @@ def _path(r):
         return r["routing"]["path"]
     return f'{r["o"]}-{r["d"]}'
 
+MIN_NIGHTS, MAX_NIGHTS = 7, 15
+
+def _nights(a, b):
+    try:
+        return (date.fromisoformat(b) - date.fromisoformat(a)).days
+    except Exception:
+        return -1
+
+def _valid_pair(outb, retb, cab):
+    """Cheapest ease-ranked (outbound, return) pair whose trip length is MIN_NIGHTS..MAX_NIGHTS nights."""
+    def legs(rows):
+        return [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 3 and bookable(r)
+                and (r["direct"] or (r.get("routing") and r["routing"].get("layoverOK")))]
+    outs, rets = legs(outb), legs(retb)
+    best = None
+    for o in outs:
+        for r in rets:
+            n = _nights(o["date"], r["date"])
+            if n < MIN_NIGHTS or n > MAX_NIGHTS:
+                continue
+            cost = eff_cost(o) + eff_cost(r)
+            if best is None or cost < best[0]:
+                best = (cost, o, r, n)
+    return best  # (cost, o, r, nights) or None
+
 def build_alerts(outb, retb, vix):
     try:
         prior = json.load(open(os.path.join(HERE, "data.json"))).get("alerts", [])
     except Exception:
         prior = []
-    po, pr = _best_leg(outb, "premium"), _best_leg(retb, "premium")
-    bo, br = _best_leg(outb, "business"), _best_leg(retb, "business")
-    p = [f"🟢 Scan v0.3.0 — <b>{len(outb)}</b> outbound / <b>{len(retb)}</b> return award options (US hubs ↔ GRU/GIG, Dec 17–Jan 4)."]
-    if po and pr:
+    pp = _valid_pair(outb, retb, "premium")
+    bp = _valid_pair(outb, retb, "business")
+    p = [f"🟢 Scan v0.4 — <b>{len(outb)}</b> outbound / <b>{len(retb)}</b> return award options (US hubs ↔ GRU/GIG, Dec 17–Jan 4)."]
+    if pp:
+        _, po, pr, pn = pp
         tot = (int(po["miles"]) + int(pr["miles"])) * 3
-        p.append(f" <b>Best premium-econ RT (3 pax, ≥3 seats, layover-OK):</b> {_path(po)} {po['date']} + {_path(pr)} {pr['date']} = <b>{tot:,} mi</b> ({po['bookVia']} / {pr['bookVia']}).")
-    if bo and br:
-        p.append(f" Business 3-seat compliant combo also live: {(int(bo['miles'])+int(br['miles']))*3:,} mi.")
+        p.append(f" <b>Best premium-econ RT (3 pax, ≥3 seats, layover-OK, {pn}-night):</b> {_path(po)} {po['date']} → {_path(pr)} {pr['date']} = <b>{tot:,} mi</b> ({po['bookVia']} / {pr['bookVia']}).")
+    if bp:
+        _, bo, br, bn = bp
+        p.append(f" Business {bn}-night 3-seat combo also live: {(int(bo['miles'])+int(br['miles']))*3:,} mi.")
     else:
-        p.append(" Business saver for 3 still scarce (Christmas peak) — hunting daily.")
+        p.append(" Business saver for 3 (valid length) still scarce (Christmas peak) — hunting daily.")
     if vix:
         p.append(f" VIX hop: {vix[0]['leg']} ~{int(vix[0]['yMiles']):,} GOL Smiles or ~$60 cash.")
     new = {"type": "green", "message": "".join(p), "time": datetime.now().strftime("%Y-%m-%d %I:%M %p")}
@@ -269,15 +296,16 @@ def build_best_option(outb, retb):
     """Cheapest layover-compliant, >=3-seat round-trip per cabin, costed door-to-door CHS<->VIX for all pax."""
     res = {}
     for cab in ["premium", "business"]:
-        o, r = _best_leg(outb, cab), _best_leg(retb, cab)
-        if o and r:
+        bp = _valid_pair(outb, retb, cab)
+        if bp:
+            _, o, r, n = bp
             res[cab] = {
                 "outPath": _full_path_out(o), "outLong": _path(o), "outDate": o["date"],
                 "outMiles": int(o["miles"]), "outSeats": o["seats"], "outVia": o["bookVia"], "outExtra": o["extra"],
                 "retPath": _full_path_ret(r), "retLong": _path(r), "retDate": r["date"],
                 "retMiles": int(r["miles"]), "retSeats": r["seats"], "retVia": r["bookVia"], "retExtra": r["extra"],
                 "totalMiles": (int(o["miles"]) + int(r["miles"])) * PAX,
-                "totalExtraCash": (o["extraPP"] + r["extraPP"]) * PAX, "pax": PAX,
+                "totalExtraCash": (o["extraPP"] + r["extraPP"]) * PAX, "pax": PAX, "nights": n,
             }
     return res
 
