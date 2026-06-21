@@ -163,7 +163,7 @@ def best_trip(avail_id, cabin):
         segs = t.get("AvailabilitySegments") or []
         ok, lays, same_ok = vet_trip_layovers(segs)
         scored.append((not ok, t.get("Stops", len(segs)-1), t.get("MileageCost", 1e9), t, segs, lays, ok))
-    scored.sort(key=lambda x: (x[0], x[1], x[2]))
+    scored.sort(key=lambda x: (x[1], x[0], x[2]))  # fewest stops first, then compliant, then miles
     _, _, _, t, segs, lays, ok = scored[0]
     route = [{"from":s.get("OriginAirport"),"to":s.get("DestinationAirport"),
               "flt":s.get("FlightNumber"),"dep":s.get("DepartsAt"),"arr":s.get("ArrivesAt"),
@@ -222,6 +222,8 @@ def collect(direction, prev_rows=None):
                 k["extraPP"], k["extra"] = leg_extra(direction, k["o"], k["d"])
                 k["bookEase"] = BOOK_EASE.get(source, 2)
                 k["stops"] = row_stops(k)
+                if k["stops"] > MAX_STOPS:
+                    continue   # drop multi-stop long-hauls — prefer one long international flight
                 found.append(k)
     return found
 
@@ -257,6 +259,7 @@ def _path(r):
     return f'{r["o"]}-{r["d"]}'
 
 MIN_NIGHTS, MAX_NIGHTS = 7, 15
+MAX_STOPS = 1   # max stops on the international long-haul (book short positioning/VIX legs separately)
 
 def _nights(a, b):
     try:
@@ -268,6 +271,7 @@ def _valid_pair(outb, retb, cab):
     """Cheapest ease-ranked (outbound, return) pair whose trip length is MIN_NIGHTS..MAX_NIGHTS nights."""
     def legs(rows):
         return [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 3 and bookable(r)
+                and row_stops(r) <= MAX_STOPS
                 and (r["direct"] or (r.get("routing") and r["routing"].get("layoverOK")))]
     outs, rets = legs(outb), legs(retb)
     best = None
@@ -284,7 +288,7 @@ def _valid_pair(outb, retb, cab):
 def _lowest_pair(outb, retb, cab):
     """Cheapest-by-miles valid-length pair, relaxing seats(>=1)/bookability/compliance — splurge reference."""
     def legs(rows):
-        return [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 1 and (r["direct"] or r.get("routing"))]
+        return [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 1 and row_stops(r) <= MAX_STOPS and (r["direct"] or r.get("routing"))]
     outs, rets = legs(outb), legs(retb)
     best = None
     for o in outs:
