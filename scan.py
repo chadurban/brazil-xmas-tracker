@@ -1,0 +1,240 @@
+#!/usr/bin/env python3
+"""
+Brazil Christmas 2026 award/cash scanner.
+
+Pulls seats.aero Partner API across many mileage programs + cabins, both directions,
+filters to US-hub <-> Brazil-gateway (GRU/GIG) routings in the Dec 17 - Jan 4 window,
+vets connection layovers (2.5-6h, same-airport only) via the trips endpoint, and writes
+data.json consumed by index.html.
+
+Run:  python3 scan.py            # pulls live, writes data.json
+      python3 scan.py --dry      # pulls live, prints summary, no write
+
+Constraints (Chad's prefs):
+  - Trip length 7-15 nights, depart Dec 17-26 2026, return Dec 26 - Jan 4 2027
+  - Open-jaw OK (arrive GIG, depart GRU, etc.); US hub agnostic; one-ways fine
+  - Layover 150-360 min, same-airport connections only (no LGA->JFK silliness)
+"""
+import json, sys, os, time, urllib.request, urllib.error, urllib.parse
+from datetime import datetime, timezone
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SECRETS = "/Users/admin/Library/CloudStorage/GoogleDrive-urbanc@acba.edu/.shortcut-targets-by-id/1Tc-st1PSSbOMdWmS2DRk_5DLXRb8WpFb/ATS1/Operations/Claude/Personal/.flight-scanner-secrets.json"
+KEY = json.load(open(SECRETS))["seats_aero_partner_authorization"]
+UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+HDR = {"Partner-Authorization": KEY, "Accept": "application/json", "User-Agent": UA}
+
+# --- Trip config ---
+GATEWAYS = {"GRU", "GIG"}
+US_HUBS = {"CHS","ATL","JFK","EWR","IAD","IAH","MIA","ORD","MCO","BOS","CLT","DFW","LAX","FLL","PHL","DTW","SFO"}
+OUT_START, OUT_END = "2026-12-17", "2026-12-27"   # outbound depart window (+buffer)
+RET_START, RET_END = "2026-12-24", "2027-01-04"   # return depart window
+LAY_MIN, LAY_MAX = 150, 360                        # minutes
+CABINS = ["business", "premium", "economy"]
+# seats.aero source program codes relevant to US<->Brazil
+PROGRAMS = ["aeroplan","united","delta","aeromexico","american","alaska",
+            "virginatlantic","flyingblue","lifemiles","smiles","azul"]
+VIX_PROGRAMS = ["smiles","azul"]
+# which of Chad's currencies can book each source's space (display hint)
+BOOK_VIA = {
+    "aeroplan":"UR/MR → Aeroplan","united":"UR → United","delta":"UR → Virgin Atlantic (Delta metal)",
+    "aeromexico":"UR → Flying Blue / Virgin","american":"AA miles (not UR/MR)","alaska":"Alaska miles (not UR/MR)",
+    "virginatlantic":"UR/MR → Virgin Atlantic","flyingblue":"UR/MR → Flying Blue",
+    "lifemiles":"Citi/Cap One → LifeMiles (not UR/MR)","smiles":"GOL Smiles","azul":"Azul / UR→United"}
+CABKEY = {"business":"J","premium":"W","economy":"Y","first":"F"}
+
+errors = []
+
+def api(path, params=None):
+    url = f"https://seats.aero/partnerapi/{path}"
+    if params: url += "?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers=HDR)
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read().decode("utf-8","replace"))
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503) and attempt < 2:
+                time.sleep(2 * (attempt+1)); continue
+            errors.append(f"{path} HTTP {e.code}"); return None
+        except Exception as ex:
+            if attempt < 2: time.sleep(1.5); continue
+            errors.append(f"{path} {type(ex).__name__}"); return None
+
+def bulk(source, cabin, o_region, d_region, start, end):
+    """Paginated bulk availability."""
+    out, cursor = [], None
+    for _ in range(6):
+        p = {"source":source,"cabin":cabin,"start_date":start,"end_date":end,
+             "origin_region":o_region,"destination_region":d_region,"take":1000}
+        if cursor: p["cursor"] = cursor
+        d = api("availability", p)
+        if not d or not isinstance(d, dict): break
+        out += d.get("data", [])
+        if not d.get("hasMore"): break
+        cursor = d.get("cursor")
+        if not cursor: break
+    return out
+
+def parse_dt(s):
+    try: return datetime.fromisoformat(s.replace("Z","+00:00"))
+    except Exception: return None
+
+def vet_trip_layovers(segs):
+    """Return (ok, layovers_min[], same_airport_ok) for a segment list."""
+    lays, same_ok = [], True
+    for i in range(len(segs)-1):
+        a_arr = parse_dt(segs[i].get("ArrivesAt")); b_dep = parse_dt(segs[i+1].get("DepartsAt"))
+        if segs[i].get("DestinationAirport") != segs[i+1].get("OriginAirport"):
+            same_ok = False
+        if a_arr and b_dep:
+            lays.append(int((b_dep - a_arr).total_seconds() // 60))
+    ok = same_ok and all(LAY_MIN <= L <= LAY_MAX for L in lays)
+    return ok, lays, same_ok
+
+def best_trip(avail_id, cabin):
+    """Fetch trips for an availability id; return best routing dict for the cabin or None."""
+    d = api(f"trips/{avail_id}")
+    trips = (d.get("data") if isinstance(d, dict) else d) or []
+    cands = [t for t in trips if (t.get("Cabin") or "").lower() == cabin]
+    if not cands:
+        return None
+    # prefer: layover-compliant, then fewest stops, then lowest mileage
+    scored = []
+    for t in cands:
+        segs = t.get("AvailabilitySegments") or []
+        ok, lays, same_ok = vet_trip_layovers(segs)
+        scored.append((not ok, t.get("Stops", len(segs)-1), t.get("MileageCost", 1e9), t, segs, lays, ok))
+    scored.sort(key=lambda x: (x[0], x[1], x[2]))
+    _, _, _, t, segs, lays, ok = scored[0]
+    route = [{"from":s.get("OriginAirport"),"to":s.get("DestinationAirport"),
+              "flt":s.get("FlightNumber"),"dep":s.get("DepartsAt"),"arr":s.get("ArrivesAt"),
+              "ac":s.get("AircraftName")} for s in segs]
+    for i,L in enumerate(lays):
+        if i+1 < len(route): route[i+1]["layoverMin"] = L
+    return {"stops":t.get("Stops", len(segs)-1),"miles":t.get("MileageCost"),
+            "taxes":t.get("TotalTaxes"),"taxCur":t.get("TaxesCurrencySymbol") or t.get("TaxesCurrency"),
+            "durationMin":t.get("TotalDuration"),"carriers":t.get("Carriers"),
+            "route":route,"layovers":lays,"layoverOK":ok,
+            "path":"-".join([route[0]["from"]] + [r["to"] for r in route]) if route else ""}
+
+def collect(direction):
+    """direction: 'out' (US->BR) or 'ret' (BR->US)."""
+    if direction == "out":
+        o_reg, d_reg, start, end = "North America", "South America", OUT_START, OUT_END
+        org_ok = lambda o: o in US_HUBS; dst_ok = lambda d: d in GATEWAYS
+    else:
+        o_reg, d_reg, start, end = "South America", "North America", RET_START, RET_END
+        org_ok = lambda o: o in GATEWAYS; dst_ok = lambda d: d in US_HUBS
+    found = []
+    for source in PROGRAMS:
+        for cabin in CABINS:
+            ck = CABKEY[cabin]
+            recs = bulk(source, cabin, o_reg, d_reg, start, end)
+            ded = {}
+            for r in recs:
+                rt = r.get("Route", {})
+                o, d = rt.get("OriginAirport"), rt.get("DestinationAirport")
+                if not (org_ok(o) and dst_ok(d)): continue
+                if not r.get(f"{ck}Available"): continue
+                seats = r.get(f"{ck}RemainingSeats") or 0
+                if seats < 1: continue  # drop phantom/0-seat cache rows
+                row = {"id":r.get("ID"),"source":source,"cabin":cabin,"o":o,"d":d,
+                    "date":r.get("Date"),"miles":r.get(f"{ck}MileageCost"),
+                    "seats":seats,"direct":r.get(f"{ck}Direct"),"airlines":r.get(f"{ck}Airlines")}
+                # dedupe by route+date+price, keep the one with the most seats
+                key = (o, d, r.get("Date"), r.get(f"{ck}MileageCost"))
+                if key not in ded or seats > ded[key]["seats"]:
+                    ded[key] = row
+            kept = sorted(ded.values(), key=lambda x: int(x["miles"] or 1e9))
+            for k in kept[:6]:
+                if k["direct"]:
+                    k["routing"] = None  # nonstop, no layover concern
+                else:
+                    k["routing"] = best_trip(k["id"], cabin)
+                found.append(k)
+    return found
+
+def collect_vix():
+    ded = {}
+    for source in VIX_PROGRAMS:
+        recs = bulk(source, "economy", "South America", "South America", OUT_START, RET_END)
+        for r in recs:
+            rt = r.get("Route", {})
+            o, d = rt.get("OriginAirport"), rt.get("DestinationAirport")
+            seats = r.get("YRemainingSeats") or 0
+            if o in GATEWAYS and d == "VIX" and r.get("YAvailable") and seats >= 1:
+                key = (o, r.get("Date"), r.get("YMileageCost"))
+                row = {"source":source,"leg":f"{o}-VIX","date":r.get("Date"),
+                       "yMiles":r.get("YMileageCost"),"ySeats":seats}
+                if key not in ded or seats > ded[key]["ySeats"]:
+                    ded[key] = row
+    return sorted(ded.values(), key=lambda x: int(x["yMiles"] or 1e9))
+
+def _best_leg(rows, cab):
+    c = [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 3
+         and (r["direct"] or (r.get("routing") and r["routing"].get("layoverOK")))]
+    c.sort(key=lambda x: int(x["miles"] or 9e9))
+    return c[0] if c else None
+
+def _path(r):
+    if r.get("routing") and r["routing"].get("path"):
+        return r["routing"]["path"]
+    return f'{r["o"]}-{r["d"]}'
+
+def build_alerts(outb, retb, vix):
+    try:
+        prior = json.load(open(os.path.join(HERE, "data.json"))).get("alerts", [])
+    except Exception:
+        prior = []
+    po, pr = _best_leg(outb, "premium"), _best_leg(retb, "premium")
+    bo, br = _best_leg(outb, "business"), _best_leg(retb, "business")
+    p = [f"🟢 Scan v0.3.0 — <b>{len(outb)}</b> outbound / <b>{len(retb)}</b> return award options (US hubs ↔ GRU/GIG, Dec 17–Jan 4)."]
+    if po and pr:
+        tot = (int(po["miles"]) + int(pr["miles"])) * 3
+        p.append(f" <b>Best premium-econ RT (3 pax, ≥3 seats, layover-OK):</b> {_path(po)} {po['date']} + {_path(pr)} {pr['date']} = <b>{tot:,} mi</b> ({po['bookVia']} / {pr['bookVia']}).")
+    if bo and br:
+        p.append(f" Business 3-seat compliant combo also live: {(int(bo['miles'])+int(br['miles']))*3:,} mi.")
+    else:
+        p.append(" Business saver for 3 still scarce (Christmas peak) — hunting daily.")
+    if vix:
+        p.append(f" VIX hop: {vix[0]['leg']} ~{int(vix[0]['yMiles']):,} GOL Smiles or ~$60 cash.")
+    new = {"type": "green", "message": "".join(p), "time": datetime.now().strftime("%Y-%m-%d %I:%M %p")}
+    return [new] + prior[:6]
+
+def main():
+    dry = "--dry" in sys.argv
+    t0 = time.time()
+    outb = collect("out")
+    retb = collect("ret")
+    vix = collect_vix()
+    for row in outb + retb:
+        row["bookVia"] = BOOK_VIA.get(row["source"], row["source"])
+    alerts = [] if dry else build_alerts(outb, retb, vix)
+    data = {
+        "lastUpdated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "scannerVersion": "0.3.0",
+        "window": {"outDepart":"Dec 17-26","retDepart":"Dec 26 - Jan 4","nights":"7-15"},
+        "counts": {"outbound":len(outb),"return":len(retb),"vix":len(vix)},
+        "outbound": outb, "return": retb, "vix": vix, "alerts": alerts, "errors": errors,
+        "scanSeconds": round(time.time()-t0,1),
+    }
+    if dry:
+        print(json.dumps(data["counts"]), "errors:", errors, f"({data['scanSeconds']}s)")
+        for label, rows in [("OUTBOUND US->BR", outb), ("RETURN BR->US", retb)]:
+            print(f"\n=== {label}: {len(rows)} ===")
+            for r in sorted(rows, key=lambda x:(x['cabin'],int(x['miles'] or 1e9)))[:18]:
+                rt = r.get("routing")
+                path = rt["path"] if rt else f"{r['o']}-{r['d']} (nonstop)"
+                lay = ("lay " + "/".join(f"{l//60}h{l%60:02d}" for l in rt["layovers"]) + (" OK" if rt["layoverOK"] else " !!")) if rt and rt.get("layovers") else ""
+                print(f"  {r['cabin']:8} {r['source']:13} {path:24} {r['date']} {str(r['miles']):>7}mi seats={r['seats']} [{r['airlines']}] {lay}")
+        print(f"\n=== VIX legs: {len(vix)} ===")
+        for v in vix[:8]:
+            print(f"  {v['source']:7} {v['leg']} {v['date']} {v['yMiles']}mi seats={v['ySeats']}")
+    else:
+        with open(os.path.join(HERE, "data.json"), "w") as f:
+            json.dump(data, f, indent=2)
+        print(f"wrote data.json: {data['counts']} in {data['scanSeconds']}s; errors={errors}")
+
+if __name__ == "__main__":
+    main()
