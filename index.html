@@ -153,6 +153,7 @@ const SCAN_DATA = {
       <div class="toggle-row">
         <label class="chk"><input type="checkbox" id="f3seats" checked> ≥3 seats</label>
         <label class="chk"><input type="checkbox" id="flay" checked> layover-OK only (2.5–6h, same airport)</label>
+        <label class="chk"><input type="checkbox" id="fbook" checked> bookable from my points</label>
       </div>
       <div class="toggle-row" id="dirFilter">
         <button class="toggle-btn active" data-dir="outbound">Outbound US→BR</button>
@@ -311,6 +312,16 @@ $('#vixRec').innerHTML=`<strong>Recommendation:</strong> ${SCAN_DATA.vixRec}`;
 
 /* ---------------- LIVE (data.json) ---------------- */
 let LIVE=null;
+// --- Booking-ease ranking (ease of booking + travel over lowest miles) ---
+const BOOK_EASE={united:1,aeroplan:1,virginatlantic:1,flyingblue:1,delta:1,aeromexico:2,smiles:2,azul:2,american:3,alaska:3,lifemiles:3};
+const STOP_PEN=25000, TIER_PEN={1:0,2:30000,3:400000}, HOME='CHS';
+const rowStops=r=>r.direct?0:(r.routing?(r.routing.stops!=null?r.routing.stops:1):1);
+const easeTier=r=>BOOK_EASE[r.source]||2;
+const effCost=r=>(+r.miles||9e9)+rowStops(r)*STOP_PEN+(TIER_PEN[easeTier(r)]||30000);
+const bookableR=r=>easeTier(r)<=2;
+const easeBadge=r=>{const t=easeTier(r);return t===1?'<span class="badge ok">1 transfer</span>':t===2?'<span class="badge w">via partner</span>':'<span class="badge bad">not UR/MR</span>';};
+const fullPathOut=r=>{const core=r.routing?r.routing.path:`${r.o}-${r.d}`;return (r.o===HOME?'':'CHS-')+core+'-VIX';};
+const fullPathRet=r=>{const core=r.routing?r.routing.path:`${r.o}-${r.d}`;return 'VIX-'+core+(r.d===HOME?'':'-CHS');};
 const segLine=r=>{ if(!r.routing) return `<div class="seg">nonstop ${r.o}→${r.d}${r.airlines?' · '+r.airlines:''}</div>`;
   const segs=r.routing.route||[];
   return `<div class="seg">`+segs.map((s,i)=>{
@@ -326,38 +337,38 @@ function optHTML(r,win){
   const tax=r.routing&&r.routing.taxes?` · ~${r.routing.taxCur||'$'}${r.routing.taxes} tax`:'';
   return `<div class="opt ${win?'win':''}"><div class="top">
       <span class="path">${path} ${badge}</span><span class="miles">${(+r.miles).toLocaleString()} mi</span></div>
-    <div class="meta">${r.date} · <span class="badge ${seatCls}">${seats>=9?'9+':seats} seat${seats==1?'':'s'}</span> ${ns} · via <b>${r.bookVia}</b>${tax} <span class="muted">· +~$${r.extra?(r.extra.positioning+r.extra.vixHop):0}pp CHS+VIX</span></div>
+    <div class="meta">${r.date} · <span class="badge ${seatCls}">${seats>=9?'9+':seats} seat${seats==1?'':'s'}</span> ${ns} ${easeBadge(r)} · via <b>${r.bookVia}</b>${tax} <span class="muted">· +~$${r.extra?(r.extra.positioning+r.extra.vixHop):0}pp CHS+VIX</span></div>
     ${segLine(r)}</div>`;
 }
 function renderSearch(){
   if(!LIVE){return;}
   const cab=$('#cabinFilter .active').dataset.cab;
   const dir=$('#dirFilter .active').dataset.dir;
-  const only3=$('#f3seats').checked, onlyLay=$('#flay').checked;
-  let rows=(LIVE[dir]||[]).filter(r=>(cab==='all'||r.cabin===cab)&&(!only3||(+r.seats||0)>=3)&&(!onlyLay||compliant(r)));
-  rows.sort((a,b)=>(a.cabin<b.cabin?-1:a.cabin>b.cabin?1:(+a.miles)-(+b.miles)));
+  const only3=$('#f3seats').checked, onlyLay=$('#flay').checked, onlyBook=$('#fbook')&&$('#fbook').checked;
+  let rows=(LIVE[dir]||[]).filter(r=>(cab==='all'||r.cabin===cab)&&(!only3||(+r.seats||0)>=3)&&(!onlyLay||compliant(r))&&(!onlyBook||bookableR(r)));
+  rows.sort((a,b)=>(a.cabin<b.cabin?-1:a.cabin>b.cabin?1:effCost(a)-effCost(b)));
   $('#searchList').innerHTML = rows.length? rows.map(r=>optHTML(r,false)).join('')
     : `<div class="muted">No options match these filters. Loosen them, or check the Log — Christmas saver space comes and goes.</div>`;
 }
-function bestLeg(dir,cab){
-  return (LIVE[dir]||[]).filter(r=>r.cabin===cab&&(+r.seats||0)>=3&&compliant(r))
-    .sort((a,b)=>(+a.miles)-(+b.miles))[0]||null;
+function easeBestLeg(dir,cab){
+  const rows=(LIVE[dir]||[]).filter(r=>r.cabin===cab&&(+r.seats||0)>=3&&bookableR(r)&&compliant(r));
+  rows.sort((a,b)=>effCost(a)-effCost(b)||(+b.seats)-(+a.seats));
+  return rows[0]||null;
 }
 function renderBuilder(){
   if(!LIVE)return;
-  const bo=LIVE.bestOption||{};
-  const pe=cash.premEcon.pp*pax, bz=cash.business.pp*pax;
-  const blocks=['premium','business'].map(cab=>{
-    const v=bo[cab], name=cab==='premium'?'Premium Economy':'Business';
-    if(!v) return `<div class="opt"><div class="top"><span class="path">${name} award</span><span class="miles muted">no ≥3-seat compliant RT yet</span></div>
-      <div class="meta">No layover-compliant ${name.toLowerCase()} round-trip with ≥3 seats in the window right now — the daily scan keeps hunting.</div></div>`;
-    const oe=v.outExtra, re=v.retExtra;
+  const blocks=[['premium','Premium Economy'],['business','Business']].map(([cab,name])=>{
+    const o=easeBestLeg('outbound',cab), r=easeBestLeg('return',cab);
+    if(!o||!r) return `<div class="opt"><div class="top"><span class="path">${name} award</span><span class="miles muted">no easy ≥3-seat RT yet</span></div>
+      <div class="meta">No layover-compliant, point-bookable ${name.toLowerCase()} round-trip with ≥3 seats right now — the daily scan keeps hunting.</div></div>`;
+    const total=((+o.miles)+(+r.miles))*pax, extra=((o.extraPP||0)+(r.extraPP||0))*pax, oe=o.extra||{}, re=r.extra||{};
+    const sb=x=>x.direct?'<span class="badge ns">NONSTOP</span>':`<span class="badge ${x.routing&&x.routing.layoverOK?'ok':'bad'}">${rowStops(x)}-stop</span>`;
     return `<div class="opt win"><div class="top"><span class="path">🏆 ${name} award — door-to-door × 3</span>
-        <span class="miles">${v.totalMiles.toLocaleString()} mi + ~$${v.totalExtraCash.toLocaleString()}</span></div>
+        <span class="miles">${total.toLocaleString()} mi + ~$${extra.toLocaleString()}</span></div>
       <div class="meta">
-        <b>Out ${v.outDate}:</b> ${v.outPath}<br><span class="muted">${v.outLong} ${v.outMiles.toLocaleString()}mi · ${v.outSeats>=9?'9+':v.outSeats} seats · ${v.outVia}${oe.posLeg?` · +${oe.posLeg} ~$${oe.positioning}pp`:''} · +${oe.vixLeg} ~$${oe.vixHop}pp</span><br>
-        <b>Back ${v.retDate}:</b> ${v.retPath}<br><span class="muted">${v.retLong} ${v.retMiles.toLocaleString()}mi · ${v.retSeats>=9?'9+':v.retSeats} seats · ${v.retVia}${re.posLeg?` · +${re.posLeg} ~$${re.positioning}pp`:''} · +${re.vixLeg} ~$${re.vixHop}pp</span><br>
-        <b>True total (3 pax):</b> ${v.totalMiles.toLocaleString()} miles + ~$${v.totalExtraCash.toLocaleString()} cash (CHS↔hub positioning + VIX hops). Hop also bookable ~8–15K GOL Smiles pp.
+        <b>Out ${o.date}:</b> ${fullPathOut(o)} ${easeBadge(o)} ${sb(o)}<br><span class="muted">${(+o.miles).toLocaleString()}mi · ${o.seats>=9?'9+':o.seats} seats · ${o.bookVia}${oe.posLeg?` · +${oe.posLeg} ~$${oe.positioning}pp`:''} · +${oe.vixLeg||'VIX hop'} ~$${oe.vixHop||80}pp</span><br>
+        <b>Back ${r.date}:</b> ${fullPathRet(r)} ${easeBadge(r)} ${sb(r)}<br><span class="muted">${(+r.miles).toLocaleString()}mi · ${r.seats>=9?'9+':r.seats} seats · ${r.bookVia}${re.posLeg?` · +${re.posLeg} ~$${re.positioning}pp`:''} · +${re.vixLeg||'VIX hop'} ~$${re.vixHop||80}pp</span><br>
+        <b>True total (3 pax):</b> ${total.toLocaleString()} miles + ~$${extra.toLocaleString()} cash. Ranked for <b>ease</b> — fewest stops + simplest transfer — not just lowest miles.
       </div></div>`;
   });
   const vixRT=160, peDD=(cash.premEcon.pp+vixRT)*pax, bzDD=(cash.business.pp+vixRT)*pax;
@@ -388,7 +399,7 @@ function renderLog(){
 }
 $$('#cabinFilter .toggle-btn').forEach(b=>b.addEventListener('click',()=>{$$('#cabinFilter .toggle-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderSearch();}));
 $$('#dirFilter .toggle-btn').forEach(b=>b.addEventListener('click',()=>{$$('#dirFilter .toggle-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderSearch();}));
-$('#f3seats').addEventListener('change',renderSearch); $('#flay').addEventListener('change',renderSearch);
+$('#f3seats').addEventListener('change',renderSearch); $('#flay').addEventListener('change',renderSearch); $('#fbook').addEventListener('change',renderSearch);
 
 fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   LIVE=d;

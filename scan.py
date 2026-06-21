@@ -43,6 +43,27 @@ BOOK_VIA = {
     "lifemiles":"Citi/Cap One → LifeMiles (not UR/MR)","smiles":"GOL Smiles","azul":"Azul / UR→United"}
 CABKEY = {"business":"J","premium":"W","economy":"Y","first":"F"}
 
+# Booking ease from Chad's points (Chase UR + Amex MR). Lower tier = simpler to book.
+# tier 1 = one direct 1:1 UR/MR transfer, book on that program's site.
+# tier 2 = reachable but via a SkyTeam/partner nuance.
+# tier 3 = NOT reachable from UR/MR (needs miles he doesn't hold) -> avoid.
+BOOK_EASE = {"united":1,"aeroplan":1,"virginatlantic":1,"flyingblue":1,"delta":1,
+             "aeromexico":2,"smiles":2,"azul":2,"american":3,"alaska":3,"lifemiles":3}
+STOP_PENALTY = 25000                       # "miles" an extra stop is worth avoiding
+TIER_PENALTY = {1:0, 2:30000, 3:400000}    # ease-of-booking penalty by tier
+
+def row_stops(r):
+    if r.get("direct"): return 0
+    rt = r.get("routing")
+    return rt.get("stops", 1) if rt else 1
+
+def eff_cost(r):
+    """Ease-weighted effective cost: real miles + stop penalty + booking-ease penalty."""
+    return int(r.get("miles") or 9e9) + row_stops(r)*STOP_PENALTY + TIER_PENALTY.get(BOOK_EASE.get(r["source"],2),30000)
+
+def bookable(r):
+    return BOOK_EASE.get(r["source"], 2) <= 2
+
 # --- True door-to-door cost model (CHS <-> VIX) ---
 PAX = 3
 HOME = "CHS"
@@ -191,6 +212,8 @@ def collect(direction):
                 else:
                     k["routing"] = best_trip(k["id"], cabin)
                 k["extraPP"], k["extra"] = leg_extra(direction, k["o"], k["d"])
+                k["bookEase"] = BOOK_EASE.get(source, 2)
+                k["stops"] = row_stops(k)
                 found.append(k)
     return found
 
@@ -212,9 +235,9 @@ def collect_vix():
     return sorted(ded.values(), key=lambda x: int(x["yMiles"] or 1e9))
 
 def _best_leg(rows, cab):
-    c = [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 3
+    c = [r for r in rows if r["cabin"] == cab and (r["seats"] or 0) >= 3 and bookable(r)
          and (r["direct"] or (r.get("routing") and r["routing"].get("layoverOK")))]
-    c.sort(key=lambda x: (int(x["miles"] or 9e9), -(x["seats"] or 0)))  # cheapest, then most seats
+    c.sort(key=lambda x: (eff_cost(x), -(x["seats"] or 0)))  # ease-weighted (booking+stops), then most seats
     return c[0] if c else None
 
 def _path(r):
