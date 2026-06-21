@@ -361,9 +361,19 @@ function renderBuilder(){
       </div></div>`;
   });
   const vixRT=160, peDD=(cash.premEcon.pp+vixRT)*pax, bzDD=(cash.business.pp+vixRT)*pax;
-  const cashLine=`<div class="opt"><div class="top"><span class="path">💵 Best Cash Option — door-to-door × 3 (estimate)</span><span class="miles">~$${peDD.toLocaleString()}–$${bzDD.toLocaleString()}</span></div>
-    <div class="meta"><b>Prem econ ~$${peDD.toLocaleString()}</b> / business ~$${bzDD.toLocaleString()} for 3 — a CHS↔GRU cash through-fare already bundles US positioning, plus ~$160/pp round-trip VIX hops (Christmas-peak estimate). As UR-as-cash that's ~${fmtK(Math.round(peDD/0.015))}–${fmtK(Math.round(bzDD/0.015))} UR @1.5¢, so the <b>premium award (~360K mi) beats burning UR as cash</b>. ⚠ Long-haul cash is an estimate — real Google-Flights pricing needs an API key (Google blocks scraping).</div></div>`;
-  $('#builder').innerHTML=blocks.join('')+cashLine;
+  const estCard=`<div class="opt"><div class="top"><span class="path">💵 Best Cash Option — door-to-door × 3 (estimate)</span><span class="miles">~$${peDD.toLocaleString()}–$${bzDD.toLocaleString()}</span></div>
+    <div class="meta"><b>Prem econ ~$${peDD.toLocaleString()}</b> / business ~$${bzDD.toLocaleString()} for 3 — a CHS↔GRU cash through-fare already bundles US positioning, plus ~$160/pp round-trip VIX hops (Christmas-peak estimate). As UR-as-cash ~${fmtK(Math.round(peDD/0.015))}–${fmtK(Math.round(bzDD/0.015))} UR @1.5¢, so the <b>premium award (~360K mi) beats burning UR as cash</b>. ⚠ Estimate — add a SerpApi key to the secrets file for live Google-Flights pricing.</div></div>`;
+  let cashCard=estCard;
+  const bc=LIVE.bestCash;
+  if(bc && bc.cabins && Object.keys(bc.cabins).length){
+    const fmtLay=ls=>(ls||[]).map(m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')).join('/');
+    const row=(cab,name)=>{const v=bc.cabins[cab]; if(!v)return ''; const tot=+(v.doorToDoorTotal||v.totalForPax||0);
+      return `<b>${name}:</b> ${v.path} · <b>$${tot.toLocaleString()}</b> for ${bc.pax} (incl ~$${v.vixRtPerPax}/pp VIX hops) · ${v.layoverOK?'✓ layover':'⚠ layover'}${v.layovers&&v.layovers.length?' '+fmtLay(v.layovers):''}${v.carriers&&v.carriers.length?' · '+v.carriers.join(', '):''} · ~${fmtK(Math.round(tot/0.015))} UR @1.5¢`;};
+    const head=+(((bc.cabins.premium||{}).doorToDoorTotal)||((bc.cabins.business||{}).doorToDoorTotal)||0);
+    cashCard=`<div class="opt"><div class="top"><span class="path">💵 Best Cash Option — door-to-door × 3 (LIVE)</span><span class="miles">$${head.toLocaleString()}+</span></div>
+      <div class="meta">${row('premium','Prem econ')}<br>${row('business','Business')}<br><span class="muted">Real Google Flights via SerpApi · ${bc.dates} · as of ${bc.asOf}</span></div></div>`;
+  }
+  $('#builder').innerHTML=blocks.join('')+cashCard;
 }
 function renderVixLive(){
   if(!LIVE)return;

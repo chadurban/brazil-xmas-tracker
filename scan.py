@@ -267,14 +267,21 @@ def main():
     for row in outb + retb:
         row["bookVia"] = BOOK_VIA.get(row["source"], row["source"])
     alerts = [] if dry else build_alerts(outb, retb, vix)
+    best_cash = None
+    if not dry:
+        try:
+            import cash as _cash
+            best_cash = _cash.best_cash()   # real SerpApi cash if keyed+stale, else cached/None
+        except Exception as e:
+            errors.append(f"cash: {type(e).__name__}")
     data = {
         "lastUpdated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "scannerVersion": "0.3.0",
+        "scannerVersion": "0.4.0",
         "window": {"outDepart":"Dec 17-26","retDepart":"Dec 26 - Jan 4","nights":"7-15"},
         "counts": {"outbound":len(outb),"return":len(retb),"vix":len(vix)},
         "outbound": outb, "return": retb, "vix": vix,
-        "bestOption": build_best_option(outb, retb), "alerts": alerts, "errors": errors,
-        "scanSeconds": round(time.time()-t0,1),
+        "bestOption": build_best_option(outb, retb), "bestCash": best_cash,
+        "alerts": alerts, "errors": errors, "scanSeconds": round(time.time()-t0,1),
     }
     if dry:
         print(json.dumps(data["counts"]), "errors:", errors, f"({data['scanSeconds']}s)")
