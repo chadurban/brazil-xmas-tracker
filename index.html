@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Brazil Christmas 2026 Flight Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3347;
+    --text: #e4e6ed;
+    --text-dim: #8b8fa3;
+    --accent: #2ecc71;      /* Brazil green */
+    --accent2: #f9ca24;     /* Brazil gold */
+    --red: #ff6b6b;
+    --orange: #ffa502;
+    --blue: #54a0ff;
+    --green: #2ed573;
+    --gold: #f9ca24;
+    --radius: 14px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+  header { text-align: center; padding: 22px 0 10px; }
+  header h1 {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+  header .subtitle { color: var(--text-dim); font-size: 0.85rem; }
+  .updated { text-align: center; color: var(--text-dim); font-size: 0.75rem; margin-bottom: 16px; }
+
+  .banner {
+    background: linear-gradient(135deg, var(--accent), #27ae60);
+    color: #07210f; text-align: center; padding: 11px 14px; border-radius: 10px;
+    font-size: 0.83rem; font-weight: 600; margin-bottom: 14px; line-height: 1.45;
+  }
+  .banner .sub { display:block; font-weight:500; font-size:0.74rem; margin-top:3px; opacity:0.85; }
+
+  .nav { display:flex; gap:6px; overflow-x:auto; padding-bottom:12px; -webkit-overflow-scrolling:touch; }
+  .nav button {
+    flex-shrink:0; padding:10px 16px; border:1px solid var(--border); border-radius:999px;
+    background:var(--surface); color:var(--text-dim); font-size:0.82rem; font-weight:500;
+    cursor:pointer; transition:all .2s; min-height:44px;
+  }
+  .nav button.active { background:var(--accent); color:#07210f; border-color:var(--accent); font-weight:600; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+  .card h2 { font-size:1.05rem; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .card h2 .icon { font-size:1.2rem; }
+  .card .sub { font-size:0.8rem; color:var(--text-dim); margin:-8px 0 14px; line-height:1.5; }
+
+  .section { display:none; }
+  .section.active { display:block; }
+
+  /* Trip params */
+  .trip-params { background:var(--surface2); border-radius:10px; padding:14px; font-size:0.84rem; line-height:1.7; color:var(--text-dim); }
+  .trip-params strong { color:var(--text); }
+
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  @media(min-width:600px){ .stat-grid{ grid-template-columns:repeat(4,1fr);} }
+  .stat { background:var(--surface2); border-radius:10px; padding:14px 10px; text-align:center; }
+  .stat .value { font-size:1.5rem; font-weight:700; line-height:1; }
+  .stat .value.green{color:var(--green);} .stat .value.gold{color:var(--gold);} .stat .value.blue{color:var(--blue);}
+  .stat .label { font-size:0.72rem; color:var(--text-dim); margin-top:6px; }
+
+  /* Strategy verdict */
+  .verdict { background:linear-gradient(135deg, rgba(46,204,113,0.16), rgba(249,202,36,0.10)); border:1px solid rgba(46,204,113,0.35);
+             border-radius:12px; padding:16px; margin-bottom:14px; font-size:0.9rem; line-height:1.55; }
+  .verdict strong{ color:var(--accent); }
+
+  .vs-grid { display:grid; gap:12px; }
+  @media(min-width:640px){ .vs-grid{ grid-template-columns:1fr 1fr; } }
+  .vs-card { background:var(--surface2); border-radius:12px; padding:16px; border:1px solid var(--border); }
+  .vs-card.win { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+  .vs-card .tag { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); font-weight:600; }
+  .vs-card .tag.win { color:var(--accent); }
+  .vs-card .headline { font-size:1.7rem; font-weight:800; margin:4px 0 2px; }
+  .vs-card .unit { font-size:0.78rem; color:var(--text-dim); }
+  .vs-card ul { list-style:none; margin-top:10px; font-size:0.8rem; color:var(--text-dim); line-height:1.6; }
+  .vs-card ul li::before { content:"– "; color:var(--accent); }
+
+  .chart-wrap { position:relative; width:100%; height:240px; }
+  .chart-wrap canvas { width:100%!important; height:100%!important; }
+  .toggle-row { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .toggle-btn { padding:8px 14px; border:1px solid var(--border); border-radius:999px; background:transparent; color:var(--text-dim); font-size:0.78rem; cursor:pointer; min-height:38px; transition:all .2s; }
+  .toggle-btn.active { background:var(--accent); color:#07210f; border-color:var(--accent); font-weight:600; }
+
+  /* Tables */
+  .tbl-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tbl { width:100%; border-collapse:collapse; font-size:0.78rem; }
+  .tbl thead th { text-align:left; padding:10px 8px; color:var(--text-dim); font-weight:500; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .tbl tbody td { padding:11px 8px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .tbl tbody tr:hover { background:var(--surface2); }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.68rem; font-weight:600; }
+  .pill.best { background:rgba(46,204,113,0.18); color:var(--green); }
+  .pill.good { background:rgba(84,160,255,0.18); color:var(--blue); }
+  .pill.meh  { background:rgba(255,165,2,0.16); color:var(--orange); }
+  .pill.na   { background:rgba(139,143,163,0.16); color:var(--text-dim); }
+
+  .opt { background:var(--surface2); border-radius:10px; padding:14px; margin-bottom:10px; font-size:0.84rem; line-height:1.55; }
+  .opt .ttl { font-weight:600; color:var(--text); margin-bottom:4px; }
+  .opt .meta { color:var(--text-dim); font-size:0.78rem; }
+
+  .alert-item { display:flex; gap:10px; padding:12px; border-radius:10px; margin-bottom:8px; font-size:0.84rem; background:var(--surface2); line-height:1.55; }
+  .alert-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+  .alert-dot.green{background:var(--green);} .alert-dot.yellow{background:var(--orange);} .alert-dot.blue{background:var(--blue);} .alert-dot.red{background:var(--red);}
+  .alert-time { color:var(--text-dim); font-size:0.72rem; margin-top:4px; }
+
+  .note { margin-top:14px; background:var(--surface2); border-radius:10px; padding:13px; font-size:0.76rem; color:var(--text-dim); line-height:1.6; }
+  .note code { background:var(--bg); padding:2px 6px; border-radius:4px; font-size:0.72rem; }
+  a { color:var(--blue); }
+</style>
+</head>
+<body>
+<!-- ========== BEGIN SCAN_DATA ========== -->
+<script>
+const SCAN_DATA = {
+  lastUpdated: "2026-06-21T01:30:00Z",
+  scannerVersion: "0.1.0",
+  mode: "production",
+
+  trip: {
+    origin: "CHS",
+    anchor: "Vitória (VIX)",
+    gateways: "GRU / GIG",
+    pax: 3,
+    cabinTarget: "Premium economy floor · business if affordable",
+    earliestDepart: "2026-12-17",
+    latestReturn: "2027-01-04",
+    minNights: 9,
+    maxNights: 15,
+    departRange: "Dec 17–26",
+    returnRange: "Dec 26–Jan 4"
+  },
+
+  // ---- Cash baseline (indicative Christmas-peak, 3 pax). Refined by daily scan + manual Google Flights check.
+  // Anchors: avg business RT to Brazil ~$5,230/pp (KAYAK); PE ~$1,797/pp general; Jun-2026 POC = $2,165/pp Delta
+  // Premium Select (low season). Christmas peak (Dec17–Jan4) runs materially above these.
+  cash: {
+    premEcon: { pp: 2900, lo: 2400, hi: 3300 },
+    business: { pp: 5500, lo: 4800, hi: 6800 },
+    urRates: [1.0, 1.5, 2.0],   // cents/pt: 1.0 floor · 1.5 legacy/pre-Oct-2025 pts · 2.0 Points Boost premium air (if eligible)
+    pocAnchor: { label: "Jun-2026 booking (Delta Premium Select)", ppCash: 2165 }
+  },
+
+  // ---- Transfer-to-partner targets (round trip, 3 pax). Aeroplan is the anchor.
+  transfer: {
+    businessUR: 360000,   // Aeroplan 60K ow × 2 × 3 (saver floor)
+    businessTaxes: 450,
+    premEconUR: 300000,   // situational — PE award space to Brazil is thin
+    note: "Business via Aeroplan saver. Peak dates may price above the 60K floor; that is what the scanner watches."
+  },
+
+  // ---- Award options table
+  awards: [
+    { program:"Air Canada Aeroplan", via:"Chase UR 1:1 (also Amex MR)", cabin:"Business", owMiles:"60K+", rt3:"360K", taxes:"~$150/pp", rank:"best",
+      routing:"Star Alliance — United / Copa / Avianca / Azul, via US hub or PTY",
+      notes:"🏆 Best value. South America held FLAT in the Jun-2026 chart update. No fuel surcharges. Can add the Azul GRU→VIX hop onto the same ticket." },
+    { program:"United MileagePlus", via:"Chase UR 1:1", cabin:"Business", owMiles:"60–90K", rt3:"360–540K", taxes:"low", rank:"good",
+      routing:"Nonstop US→GRU/GIG (IAH / EWR / IAD / MIA)",
+      notes:"Instant transfer, no close-in fees, nonstop, and United can ticket Azul for the VIX leg. Fully dynamic — price swings by date." },
+    { program:"Virgin Atlantic → Delta", via:"Chase UR 1:1 (also Amex MR)", cabin:"Business", owMiles:"~75–90K", rt3:"~450–540K", taxes:"low", rank:"good",
+      routing:"Delta One nonstop ATL→GRU/GIG (your home Delta hub via CHS)",
+      notes:"Great routing through ATL. Delta saver space is scarce — grab it the moment it appears." },
+    { program:"Flying Blue (AF/KLM)", via:"Chase UR 1:1 (also Amex MR)", cabin:"Business", owMiles:"53K–100K+", rt3:"320–600K+", taxes:"€€ surcharges", rank:"meh",
+      routing:"Via CDG / AMS (long backtrack from US)",
+      notes:"Watch monthly Promo Rewards (−25%). Partners with GOL for the VIX hop. Routing via Europe is long; dynamic pricing often spikes at peak." },
+    { program:"Avianca LifeMiles", via:"Citi / Capital One only (NOT Chase/Amex)", cabin:"Business", owMiles:"~63K", rt3:"~378K", taxes:"low", rank:"na",
+      routing:"Star Alliance — United / Copa / Avianca",
+      notes:"Best Star value with low surcharges — but only if you also hold Citi ThankYou or Capital One points. Not reachable from UR or MR." }
+  ],
+
+  // ---- VIX last-mile (gateway → Vitória)
+  vixHop: [
+    { leg:"GRU → VIX", carrier:"Azul (nonstop, ~1h15, many daily)", cash:"~$40–120 ow", award:"Azul Fidelidade ~6–9K pts ow · or fold into a United award (United ticket Azul)" },
+    { leg:"GIG → VIX", carrier:"GOL / LATAM (nonstop, ~1h, daily)", cash:"~$50–130 ow", award:"GOL Smiles / LATAM Pass · or Flying Blue → GOL" }
+  ],
+  vixRec: "Simplest: book the premium long-haul to GRU/GIG on points, then buy the short hop in cash (~$300–700 total for 3 round-trip). Or fold Azul into a United award.",
+
+  alerts: [
+    { type:"green", message:"🟢 Tracker v0.1.0 live — <b>Brazil Christmas 2026</b> (VIX via GRU/GIG, 3 pax, Dec 17–Jan 4, 9–15 nights). Unlike the Japan tracker, every carrier's award calendar for this window is <b>already open and bookable today</b> (~6 months out) — the game is finding 3 saver seats and pouncing, and Christmas + Brazilian summer is the scarcest space of the year, so earlier is better. <b>Headline:</b> transferring UR to Aeroplan (60K+ ow business, South America held flat in the Jun-2026 chart) lands all 3 of you in business round-trip for ~360K UR (~4.6¢/pt) vs ~825K–1.1M UR to burn UR as cash — transfer wins ~3×, when 3 saver seats exist.", time:"2026-06-20 9:30 PM" },
+    { type:"yellow", message:"🟡 Cash baseline is an <b>indicative Christmas-peak estimate</b>, not a live quote. The live flight-search tool (Kiwi) only returns 2–3 stop self-transfer routings to Brazil (CHS→ATL→MEX→BOG→GRU, 22–37h) at inflated prices, so it's unusable for clean premium fares. Next step: pull a real CHS/ATL→GRU premium-economy + business quote from Google Flights to lock the cash anchor. Business modeled at $5,500/pp, premium economy $2,900/pp.", time:"2026-06-20 9:30 PM" },
+    { type:"green", message:"🟢 Chase rate confirmed: you hold <b>both</b> the legacy 1.5¢ bucket and the new Points Boost. Play it as — redeem <b>Points Boost (up to 2.0¢)</b> on eligible premium airfare, fall back to <b>legacy 1.5¢</b> points (pre-Oct-2025, good through Oct 26 2027) elsewhere. Net UR-as-cash range ~1.5–2.0¢, still well under the ~4.6¢ you get transferring to Aeroplan — so transfer stays the play whenever 3 saver seats exist.", time:"2026-06-20 9:35 PM" }
+  ]
+};
+</script>
+<!-- ========== END SCAN_DATA ========== -->
+
+<div class="container">
+  <div class="banner" id="banner"></div>
+  <header>
+    <h1>🇧🇷 Brazil Christmas 2026</h1>
+    <div class="subtitle">Points & Award Tracker • 3 Pax • Premium Econ / Business</div>
+  </header>
+  <div class="updated" id="lastUpdated"></div>
+
+  <nav class="nav" id="nav">
+    <button class="active" data-section="strategy">Strategy</button>
+    <button data-section="awards">Awards</button>
+    <button data-section="cash">Cash</button>
+    <button data-section="vix">VIX Hop</button>
+    <button data-section="plan">Plan</button>
+    <button data-section="log">Log</button>
+  </nav>
+
+  <!-- STRATEGY -->
+  <div class="section active" id="sec-strategy">
+    <div class="card">
+      <h2><span class="icon">🎯</span> UR as Cash vs. Transfer to Partner</h2>
+      <div class="verdict" id="verdict"></div>
+      <div class="toggle-row" id="cabinToggle">
+        <button class="toggle-btn active" data-cabin="business">Business</button>
+        <button class="toggle-btn" data-cabin="premEcon">Premium Economy</button>
+      </div>
+      <div class="vs-grid" id="vsGrid"></div>
+    </div>
+    <div class="card">
+      <h2><span class="icon">📊</span> UR Required — Same Seats, Two Ways</h2>
+      <div class="sub">Total Ultimate Rewards needed to put all 3 of you in the cabin, round-trip.</div>
+      <div class="chart-wrap"><canvas id="urChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- AWARDS -->
+  <div class="section" id="sec-awards">
+    <div class="card">
+      <h2><span class="icon">✈️</span> Award Options — US → Brazil (Business)</h2>
+      <div class="sub">One-way saver pricing per person; "3 RT" = round-trip for all three. Hunt these for 3 saver seats in the window.</div>
+      <div class="tbl-scroll">
+        <table class="tbl">
+          <thead><tr><th>Program</th><th>Transfer from</th><th>OW</th><th>3 RT</th><th>Taxes</th><th>Routing / Notes</th></tr></thead>
+          <tbody id="awardsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASH -->
+  <div class="section" id="sec-cash">
+    <div class="card">
+      <h2><span class="icon">💵</span> Cash Baseline & UR-as-Cash</h2>
+      <div class="sub" id="cashSub"></div>
+      <div class="stat-grid" id="cashStats"></div>
+      <div class="tbl-scroll">
+        <table class="tbl">
+          <thead><tr><th>Cabin</th><th>Cash (3 pax)</th><th>UR @1.0¢</th><th>UR @1.5¢</th><th>UR @2.0¢</th></tr></thead>
+          <tbody id="cashBody"></tbody>
+        </table>
+      </div>
+      <div class="note" id="cashNote"></div>
+    </div>
+  </div>
+
+  <!-- VIX HOP -->
+  <div class="section" id="sec-vix">
+    <div class="card">
+      <h2><span class="icon">🛬</span> The Last Mile — Gateway → Vitória</h2>
+      <div class="sub">No international service to VIX, so the long-haul lands at GRU/GIG and a short hop finishes the trip.</div>
+      <div id="vixList"></div>
+      <div class="verdict" id="vixRec" style="margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- PLAN -->
+  <div class="section" id="sec-plan">
+    <div class="card">
+      <h2><span class="icon">📅</span> Trip Parameters</h2>
+      <div class="stat-grid" id="planStats"></div>
+      <div class="trip-params" id="tripParams"></div>
+    </div>
+    <div class="card">
+      <h2><span class="icon">⏱️</span> Booking Status</h2>
+      <div class="trip-params" id="bookStatus"></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="section" id="sec-log">
+    <div class="card">
+      <h2><span class="icon">🔔</span> Scan Log & Alerts</h2>
+      <div id="alertsList"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Auto-Scanner:</strong> updated by the flight scanner. Data block <code>SCAN_DATA</code> between the
+    <code>BEGIN/END SCAN_DATA</code> markers. Award/cash figures from public award charts + market data (Aeroplan, Flying Blue,
+    KAYAK, NerdWallet/TPG on Chase Points Boost) and are estimates until confirmed live. Last scan: <span id="scanTime"></span>.
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmtK = n => (n>=1000 ? (n/1000).toLocaleString(undefined,{maximumFractionDigits:0})+'K' : n);
+const fmt$ = n => '$'+Number(n).toLocaleString();
+
+// Banner + timestamps
+const t = SCAN_DATA.trip;
+$('#banner').innerHTML = `Award calendars for Dec 17 – Jan 4 are <u>already open</u> — book-now window, not a countdown
+  <span class="sub">${t.anchor} · via ${t.gateways} · ${t.pax} pax · ${t.minNights}–${t.maxNights} nights</span>`;
+const lu = new Date(SCAN_DATA.lastUpdated);
+$('#lastUpdated').textContent = 'Last scan: ' + lu.toLocaleString();
+$('#scanTime').textContent = lu.toLocaleString();
+
+// Nav
+document.querySelectorAll('.nav button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    $('#sec-'+btn.dataset.section).classList.add('active');
+  });
+});
+
+// ---- Strategy
+const cash = SCAN_DATA.cash, xfer = SCAN_DATA.transfer, pax = t.pax;
+const cashTotal = { business: cash.business.pp*pax, premEcon: cash.premEcon.pp*pax };
+const urCash = (cabin,rate)=> Math.round(cashTotal[cabin]/(rate/100));
+const xferUR = { business: xfer.businessUR, premEcon: xfer.premEconUR };
+
+$('#verdict').innerHTML = `<strong>Verdict:</strong> In <b>business</b>, transfer UR to <b>Aeroplan</b> (60K+ one-way,
+  South America held flat) — ~${fmtK(xferUR.business)} UR puts all 3 of you round-trip at ~4.6¢/pt, vs
+  ${fmtK(urCash('business',1.5))}–${fmtK(urCash('business',1.0))} UR to burn points as cash. <b>Transfer wins ~3×</b>,
+  whenever 3 saver seats exist. In <b>premium economy</b> the gap narrows and award space is thin, so <b>UR-as-cash is the
+  dependable play</b>. This tracker's job: hunt 3 saver business seats in the window and keep the cash fallback fresh.`;
+
+function renderVS(cabin){
+  const grid = $('#vsGrid');
+  const xUR = xferUR[cabin], c15 = urCash(cabin,1.5), c20 = urCash(cabin,2.0);
+  const cppX = (cashTotal[cabin]/xUR*100);
+  const xferWins = xUR < c15;
+  grid.innerHTML = `
+    <div class="vs-card ${xferWins?'win':''}">
+      <div class="tag ${xferWins?'win':''}">${xferWins?'★ Best — Transfer':'Transfer to partner'}</div>
+      <div class="headline">${fmtK(xUR)} <span class="unit">UR</span></div>
+      <div class="unit">${cabin==='business'?'Aeroplan 60K+ ow · ':''}round-trip, 3 pax · ~${cppX.toFixed(1)}¢/pt</div>
+      <ul>
+        <li>+ ~${fmt$(xfer.businessTaxes)} taxes total</li>
+        <li>Needs 3 saver seats in window</li>
+        <li>${cabin==='business'?'Star Alliance / Delta routings':'Thin PE award space — situational'}</li>
+      </ul>
+    </div>
+    <div class="vs-card ${!xferWins?'win':''}">
+      <div class="tag">UR as cash (portal)</div>
+      <div class="headline">${fmtK(c15)} <span class="unit">UR</span></div>
+      <div class="unit">@1.5¢ · ${fmt$(cashTotal[cabin])} fare · (${fmtK(c20)} UR @2¢)</div>
+      <ul>
+        <li>Always available — no award space needed</li>
+        <li>Earns no status / miles</li>
+        <li>Rate depends on your Points Boost bucket</li>
+      </ul>
+    </div>`;
+}
+let cabinSel='business';
+renderVS(cabinSel);
+document.querySelectorAll('#cabinToggle .toggle-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#cabinToggle .toggle-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); cabinSel=b.dataset.cabin; renderVS(cabinSel); drawUR();
+  });
+});
+
+// ---- UR chart
+let urChart;
+function drawUR(){
+  const ctx = $('#urChart').getContext('2d');
+  if(urChart) urChart.destroy();
+  const data = [ xferUR[cabinSel], urCash(cabinSel,2.0), urCash(cabinSel,1.5), urCash(cabinSel,1.0) ];
+  urChart = new Chart(ctx,{
+    type:'bar',
+    data:{ labels:['Transfer\n(Aeroplan)','Cash @2.0¢','Cash @1.5¢','Cash @1.0¢'],
+      datasets:[{ data, backgroundColor:['#2ecc71','#54a0ff','#ffa502','#ff6b6b'], borderRadius:6, barPercentage:0.65 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>fmtK(c.raw)+' UR' } } },
+      scales:{ x:{ ticks:{ color:'#8b8fa3', font:{size:11} }, grid:{display:false} },
+        y:{ ticks:{ color:'#8b8fa3', font:{size:11}, callback:v=>fmtK(v) }, grid:{ color:'rgba(46,51,71,0.5)' }, beginAtZero:true } } }
+  });
+}
+drawUR();
+
+// ---- Awards table
+(function(){
+  const rankPill = { best:'<span class="pill best">BEST</span>', good:'<span class="pill good">GOOD</span>',
+                     meh:'<span class="pill meh">SITUATIONAL</span>', na:'<span class="pill na">IF YOU HAVE IT</span>' };
+  $('#awardsBody').innerHTML = SCAN_DATA.awards.map(a=>`
+    <tr>
+      <td><b>${a.program}</b><br>${rankPill[a.rank]}</td>
+      <td>${a.via}</td>
+      <td>${a.owMiles}</td>
+      <td><b>${a.rt3}</b></td>
+      <td>${a.taxes}</td>
+      <td><b>${a.routing}</b><br><span style="color:var(--text-dim)">${a.notes}</span></td>
+    </tr>`).join('');
+})();
+
+// ---- Cash
+(function(){
+  $('#cashSub').innerHTML = `Indicative <b>Christmas-peak</b> estimate (Dec 17–Jan 4), 3 pax round-trip — refined by the daily scan.
+    Anchor: ${cash.pocAnchor.label} ran ${fmt$(cash.pocAnchor.ppCash)}/pp in low season.`;
+  $('#cashStats').innerHTML = `
+    <div class="stat"><div class="value blue">${fmt$(cash.premEcon.pp)}</div><div class="label">Prem Econ / pp</div></div>
+    <div class="stat"><div class="value gold">${fmt$(cash.business.pp)}</div><div class="label">Business / pp</div></div>
+    <div class="stat"><div class="value">${fmt$(cashTotal.premEcon)}</div><div class="label">Prem Econ × 3</div></div>
+    <div class="stat"><div class="value">${fmt$(cashTotal.business)}</div><div class="label">Business × 3</div></div>`;
+  const row = (name,cabin)=>`<tr><td><b>${name}</b></td><td>${fmt$(cashTotal[cabin])}</td>
+    <td>${fmtK(urCash(cabin,1.0))} UR</td><td>${fmtK(urCash(cabin,1.5))} UR</td><td>${fmtK(urCash(cabin,2.0))} UR</td></tr>`;
+  $('#cashBody').innerHTML = row('Premium Economy','premEcon') + row('Business','business');
+  $('#cashNote').innerHTML = `<b>Why no live quote yet:</b> the Kiwi search tool only returns 2–3 stop self-transfer routings to Brazil
+    (e.g. CHS→ATL→MEX→BOG→GRU, 22–37h) at inflated prices — useless for clean premium fares. A manual Google Flights pull on
+    CHS/ATL→GRU will lock the real anchor. <b>Your Chase mix:</b> you hold <b>both</b> buckets — redeem via <b>Points Boost
+    (up to 2.0¢)</b> on eligible premium airfare, and use your <b>legacy 1.5¢</b> points (pre-Oct-2025, good through Oct 26 2027)
+    elsewhere. So your realistic UR-as-cash rate sits ~1.5–2.0¢ — still far below the ~4.6¢ from transferring to Aeroplan.`;
+})();
+
+// ---- VIX
+(function(){
+  $('#vixList').innerHTML = SCAN_DATA.vixHop.map(h=>`
+    <div class="opt"><div class="ttl">${h.leg} — ${h.carrier}</div>
+      <div class="meta"><b>Cash:</b> ${h.cash} &nbsp;•&nbsp; <b>Award:</b> ${h.award}</div></div>`).join('');
+  $('#vixRec').innerHTML = `<strong>Recommendation:</strong> ${SCAN_DATA.vixRec}`;
+})();
+
+// ---- Plan
+(function(){
+  $('#planStats').innerHTML = `
+    <div class="stat"><div class="value green">${t.pax}</div><div class="label">Travelers</div></div>
+    <div class="stat"><div class="value gold">${t.minNights}–${t.maxNights}</div><div class="label">Nights</div></div>
+    <div class="stat"><div class="value blue" id="daysOut">—</div><div class="label">Days to depart</div></div>
+    <div class="stat"><div class="value" style="font-size:1.05rem">VIX</div><div class="label">via ${t.gateways}</div></div>`;
+  $('#tripParams').innerHTML = `
+    <strong>Travelers:</strong> 3 (Chad, Kami, Clara)<br>
+    <strong>Anchor:</strong> ${t.anchor} — fly premium to ${t.gateways}, finish with a cheap hop<br>
+    <strong>Origin:</strong> ${t.origin} (via ATL / MIA / IAH / EWR)<br>
+    <strong>Window:</strong> depart ${t.departRange} · return ${t.returnRange} (earliest ${t.earliestDepart}, latest return ${t.latestReturn})<br>
+    <strong>Length:</strong> ${t.minNights}–${t.maxNights} nights, flexes toward cheapest/most-available dates<br>
+    <strong>Cabin target:</strong> ${t.cabinTarget}`;
+  $('#bookStatus').innerHTML = `
+    <strong>Award windows:</strong> <span style="color:var(--green)">OPEN</span> — all carriers' calendars cover this window now (~6 months out)<br>
+    <strong>Implication:</strong> no countdown to wait out; it's about finding 3 saver seats together and booking fast<br>
+    <strong>Scarcity:</strong> Christmas + Brazilian summer is peak-of-peak — saver space thins as dates approach<br>
+    <strong>Action:</strong> set award alerts on Aeroplan / United / Virgin-Delta for 3 J seats in window`;
+  const dep = new Date(t.earliestDepart+'T00:00:00');
+  const days = Math.ceil((dep - new Date())/(1000*60*60*24));
+  $('#daysOut').textContent = days;
+})();
+
+// ---- Log
+(function(){
+  $('#alertsList').innerHTML = SCAN_DATA.alerts.map(a=>`
+    <div class="alert-item"><div class="alert-dot ${a.type}"></div>
+      <div><div>${a.message}</div><div class="alert-time">${a.time}</div></div></div>`).join('');
+})();
+</script>
+</body>
+</html>
