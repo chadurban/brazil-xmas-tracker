@@ -23,6 +23,16 @@
   .nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;-webkit-overflow-scrolling:touch;}
   .nav button{flex-shrink:0;padding:10px 16px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text-dim);font-size:0.82rem;font-weight:500;cursor:pointer;transition:all .2s;min-height:44px;}
   .nav button.active{background:var(--accent);color:#07210f;border-color:var(--accent);font-weight:600;}
+  .bal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;}
+  @media(max-width:560px){.bal-grid{grid-template-columns:1fr;}}
+  .bal{display:flex;flex-direction:column;gap:5px;font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
+  .bal input{padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:1.1rem;font-weight:700;font-variant-numeric:tabular-nums;-moz-appearance:textfield;}
+  .bal input::-webkit-outer-spin-button,.bal input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .bal input:focus{outline:none;border-color:var(--accent);}
+  .afford{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin:6px 0;font-size:0.85rem;}
+  .afford .yes{color:var(--accent);font-weight:700;white-space:nowrap;} .afford .no{color:#ff6b6b;font-weight:700;white-space:nowrap;}
+  .bal-tot{font-size:1.15rem;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;}
+  .bal-head{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-dim);margin:13px 0 3px;font-weight:600;}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
   .card h2{font-size:1.05rem;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
   .card h2 .icon{font-size:1.2rem;}
@@ -133,6 +143,7 @@ const SCAN_DATA = {
     <button class="active" data-section="search">🔎 Search</button>
     <button data-section="strategy">Strategy</button>
     <button data-section="cash">Cash</button>
+    <button data-section="points">💰 Points</button>
     <button data-section="plan">Plan</button>
     <button data-section="history">📈 History</button>
     <button data-section="log">Log</button>
@@ -221,6 +232,20 @@ const SCAN_DATA = {
     </div>
   </div>
 
+  <!-- POINTS -->
+  <div class="section" id="sec-points">
+    <div class="card">
+      <h2><span class="icon">💰</span> My Points Balances</h2>
+      <div class="sub">Stored only in <b>this browser</b> (localStorage) — never uploaded to the site or git. Update anytime; the affordability check re-runs against the live best option.</div>
+      <div class="bal-grid">
+        <label class="bal">Chase UR · yours<input type="number" inputmode="numeric" id="balUR" placeholder="0"></label>
+        <label class="bal">Chase UR · ACBA<input type="number" inputmode="numeric" id="balURacba" placeholder="0"></label>
+        <label class="bal">Amex MR · yours<input type="number" inputmode="numeric" id="balMR" placeholder="0"></label>
+      </div>
+      <div id="balSummary"><div class="muted">Enter your balances above to see what they can book.</div></div>
+    </div>
+  </div>
+
   <!-- HISTORY -->
   <div class="section" id="sec-history">
     <div class="card">
@@ -252,6 +277,7 @@ const fmtK=n=>{n=+n; return n>=1000?(n/1000).toLocaleString(undefined,{maximumFr
 const fmt$=n=>'$'+Number(n).toLocaleString();
 const CABK={business:'J',premium:'W',economy:'Y',first:'F'}, CABNAME={business:'Business',premium:'Prem Econ',economy:'Economy',first:'First'};
 const t=SCAN_DATA.trip, pax=t.pax;
+const BAL_KEY='brazilXmasBal2026';
 
 // nav
 $$('.nav button').forEach(b=>b.addEventListener('click',()=>{
@@ -494,7 +520,7 @@ function applyData(d){
   $('#lastUpdated').textContent='Updated '+lu.toLocaleString()+`  ·  ${d.counts.outbound+d.counts.return} live award options`+partial;
   $('#engineVer').textContent='scan.py '+d.scannerVersion;
   $('#searchSub').innerHTML=`seats.aero · <b>single-ticket</b> CHS↔Brazil (≤1 stop, GRU/GIG/VCP/CNF) · Dec 17 – Jan 4 · <b>${d.counts.outbound}</b> out / <b>${d.counts.return}</b> return.`;
-  renderBuilder(); renderSearch(); renderVixLive(); renderLog();
+  renderBuilder(); renderSearch(); renderVixLive(); renderLog(); renderBal();
   return true;
 }
 // 1) Render instantly from in-page data — never hangs on "loading".
@@ -502,6 +528,39 @@ HIST=readInline('history-data','[]');
 const okInline=applyData(readInline('live-data','{}'));
 renderHistory();
 if(!okInline){ $('#lastUpdated').textContent='First scan pending — runs automatically each morning.'; $('#builder').innerHTML='<div class="muted">The first automatic scan is pending. It runs every morning and fills in here on its own — no action needed.</div>'; $('#searchList').innerHTML=''; $('#vixLive').innerHTML=''; renderLog(); }
+/* ---------------- POINTS BALANCES (browser-local only — never uploaded) ---------------- */
+function loadBal(){ try{return JSON.parse(localStorage.getItem(BAL_KEY))||{};}catch(e){return {};} }
+function renderBal(){
+  if(!$('#balSummary'))return;
+  const b=loadBal();
+  const setv=(sel,v)=>{const el=$(sel); if(el&&document.activeElement!==el) el.value=(v==null||v==='')?'':v;};
+  setv('#balUR',b.ur); setv('#balURacba',b.uracba); setv('#balMR',b.mr);
+  const ur=+b.ur||0, uracba=+b.uracba||0, mr=+b.mr||0, xfer=ur+mr;
+  if(!ur&&!uracba&&!mr){ $('#balSummary').innerHTML='<div class="muted">Enter your balances above to see what they can book.</div>'; return; }
+  const bo=(LIVE&&LIVE.bestOption)||{}, tr=SCAN_DATA.transfer;
+  const row=(label,need,have,unit)=> need?`<div class="afford"><span>${label} — <b>${fmtK(need)}</b>${unit||' pts'}</span><span class="${have>=need?'yes':'no'}">${have>=need?'✓ covered':'short '+fmtK(need-have)}</span></div>`:'';
+  let h=`<div class="afford" style="border-color:var(--accent)"><span><b>Your transferable</b> — Chase UR + Amex MR</span><span class="bal-tot">${xfer.toLocaleString()}</span></div>`;
+  h+=`<div class="bal-head">Saver target — the goal, when 3 seats align</div>`;
+  h+=row('Premium-econ saver · 3 RT', tr&&tr.premEconUR, xfer);
+  h+=row('Business saver · 3 RT', tr&&tr.businessUR, xfer);
+  if(bo.premium||bo.business){
+    h+=`<div class="bal-head">Today's best-found · live door-to-door</div>`;
+    h+=row('Premium award', bo.premium&&bo.premium.totalMiles, xfer);
+    h+=row('Business award', bo.business&&bo.business.totalMiles, xfer);
+  }
+  const bcp=LIVE&&LIVE.bestCash&&LIVE.bestCash.cabins&&LIVE.bestCash.cabins.premium;
+  if(bcp&&bcp.doorToDoorTotal){ h+=`<div class="bal-head">Chase portal · Chase UR only</div>`+row('Premium via portal @1.5¢', Math.round(bcp.doorToDoorTotal/0.015), ur, ' UR'); }
+  h+=`<div class="note" style="margin-top:10px">UR <i>and</i> MR transfer 1:1 to Virgin Atlantic / Aeroplan / Flying Blue, so both count toward award space; the Chase <b>portal</b> draws Chase UR only.`;
+  if(uracba) h+=` <br>+ ${uracba.toLocaleString()} <b>ACBA</b> Chase UR tracked separately (employer account — not added above).`;
+  h+=`</div>`;
+  $('#balSummary').innerHTML=h;
+}
+['#balUR','#balURacba','#balMR'].forEach(sel=>{const el=$(sel); if(el)el.addEventListener('input',()=>{
+  try{localStorage.setItem(BAL_KEY,JSON.stringify({ur:$('#balUR').value,uracba:$('#balURacba').value,mr:$('#balMR').value}));}catch(e){}
+  renderBal();
+});});
+renderBal();
+
 // 2) Best-effort refresh from data.json if it is newer (harmless if it fails offline/cached).
 fetch('./data.json?'+Date.now()).then(r=>r.ok?r.json():null).then(d=>{ if(d&&d.lastUpdated&&(!LIVE||new Date(d.lastUpdated)>=new Date(LIVE.lastUpdated))){ applyData(d); if(Array.isArray(d.history)){HIST=d.history;} renderHistory(); } }).catch(()=>{});
 </script>
