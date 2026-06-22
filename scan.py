@@ -409,10 +409,16 @@ def main():
             best_cash = _cash.best_cash()   # real SerpApi cash if keyed+stale, else cached/None
         except Exception as e:
             errors.append(f"cash: {type(e).__name__}")
+    # pounce alert: cash.py flags a premium-econ price anomaly vs its trailing baseline
+    an = best_cash.get("anomaly") if isinstance(best_cash, dict) else None
+    if an and an.get("pounce") and not dry:
+        pdd = ((best_cash.get("cabins") or {}).get("premium") or {}).get("doorToDoorTotal")
+        why = "a new low since tracking began" if an.get("newLow") else f"{an.get('pctBelowMedian')}% below the {an.get('days',0)}-day norm (~${an.get('baseline'):,})"
+        alerts = [{"type": "gold", "message": f"🔥 <b>POUNCE: premium-econ cash is cheap today.</b> ~${int(pdd):,} door-to-door for 3 ({why}). The daily cash watch flagged it; grab it if the trip's a go.", "time": datetime.now().strftime("%Y-%m-%d %I:%M %p")}] + alerts
     best_opt = build_best_option(outb, retb)
     data = {
         "lastUpdated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "scannerVersion": "0.4.0",
+        "scannerVersion": "0.4.1",
         "window": {"outDepart":"Dec 17-26","retDepart":"Dec 26 - Jan 4","nights":"7-15"},
         "counts": {"outbound":len(outb),"return":len(retb),"vix":len(vix)},
         "outbound": outb, "return": retb, "vix": vix,

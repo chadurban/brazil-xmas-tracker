@@ -25,7 +25,9 @@ GATEWAYS = ["GRU", "GIG"]
 CASH_DATES = ("2026-12-19", "2026-12-30")        # representative depart/return (11 nights, in the 7-15 window)
 CABINS = {"premium": 2, "business": 3, "first": 4}            # SerpApi travel_class: 1 econ, 2 prem-econ, 3 business, 4 first
 LAY_MIN, LAY_MAX = 150, 360                       # Chad's layover window (minutes)
-MIN_DAYS_BETWEEN = 3                              # quota guard for the free tier
+FULL_EVERY = 6                                    # business/first refresh every N days (SerpApi free-tier quota); premium econ refreshes DAILY for anomaly/pounce detection
+POUNCE_FACTOR = 0.88                              # premium cash <= 88% of the trailing median => flag a pounce
+# quota math: prem 2 searches/day × 30 ≈ 60/mo + full 4 searches × ~5 ≈ 20/mo ≈ 80/mo, under the 100/mo free tier
 VIX_HOP_CASH = 105                                # one-way gateway<->VIX cash pp (real: Jun-2026 LATAM premium-econ ran ~$108/pp/leg)
 
 def get_key():
@@ -61,10 +63,11 @@ def parse_itineraries(data):
     out.sort(key=lambda x: (not x["layoverOK"], x["priceRaw"] if x["priceRaw"] is not None else 9e9))
     return out
 
-def fetch(key):
-    """Query SerpApi for each cabin/gateway; return the cheapest compliant RT per cabin."""
+def fetch(key, cabins=None):
+    """Query SerpApi for each requested cabin/gateway; return the cheapest compliant RT per cabin."""
     res, searches, errs = {}, 0, []
-    for cab, tc in CABINS.items():
+    for cab in (cabins or list(CABINS.keys())):
+        tc = CABINS[cab]
         best = None
         for gw in GATEWAYS:
             try:
@@ -98,31 +101,65 @@ def _state():
     except Exception:
         return None
 
+def _days_since(iso):
+    try:
+        return (date.today() - date.fromisoformat(iso)).days
+    except Exception:
+        return 999
+
+def _anomaly(history, today_price):
+    """Flag a pounce when today's premium door-to-door is well below the trailing norm."""
+    if not today_price or not history:
+        return None
+    today = date.today().isoformat()
+    prior = [h["premium"] for h in history if h.get("premium") and h.get("date") != today]
+    if len(prior) < 5:                            # need a few days of baseline first
+        return None
+    s = sorted(prior); n = len(s)
+    median = s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+    prior_min = min(prior)
+    return {"baseline": round(median), "priorMin": prior_min,
+            "pctBelowMedian": round((median - today_price) / median * 100),
+            "newLow": today_price < prior_min, "pounce": today_price <= POUNCE_FACTOR * median,
+            "days": len(prior) + 1}
+
 def best_cash(force=False):
-    """Public entry: cached-or-fresh real cash, or None if unavailable. Never raises."""
+    """Public entry: cached-or-fresh real cash, or None if unavailable. Never raises.
+    Premium econ (the floor cabin) refreshes DAILY for anomaly/pounce detection; business+first
+    every FULL_EVERY days to conserve the SerpApi free-tier quota. Maintains a premium price
+    history and flags anomalously-cheap days."""
     try:
         key = get_key()
         if not key:
             return None
-        prev = _state()
-        if prev and not force and prev.get("asOf"):
-            try:
-                age = (date.today() - date.fromisoformat(prev["asOf"])).days
-                if age < MIN_DAYS_BETWEEN:
-                    return prev  # reuse cache to conserve quota
-            except Exception:
-                pass
-        cabins, searches, errs = fetch(key)
-        if not cabins:
-            return prev  # keep last good cache on a failed refresh
-        out = {"source": "SerpApi Google Flights", "asOf": date.today().isoformat(),
+        prev = _state() or {}
+        today = date.today().isoformat()
+        prev_cabins = dict(prev.get("cabins") or {})
+        fetch_prem = force or prev.get("premAsOf") != today
+        fetch_full = force or prev.get("fullAsOf") is None or _days_since(prev.get("fullAsOf")) >= FULL_EVERY
+        want = (["premium"] if fetch_prem else []) + (["business", "first"] if fetch_full else [])
+        if not want:
+            return prev or None                   # already current for today
+        cabins, searches, errs = fetch(key, want)
+        merged = dict(prev_cabins); merged.update(cabins)
+        if not merged:
+            return prev or None                   # failed refresh with no prior -> nothing
+        hist = [h for h in (prev.get("priceHistory") or []) if h.get("date") != today]
+        pdd = (merged.get("premium") or {}).get("doorToDoorTotal")
+        if pdd:
+            hist.append({"date": today, "premium": pdd})
+            hist = hist[-90:]
+        out = {"source": "SerpApi Google Flights", "asOf": today,
+               "premAsOf": today if ("premium" in cabins) else prev.get("premAsOf"),
+               "fullAsOf": today if any(c in cabins for c in ("business", "first")) else prev.get("fullAsOf"),
                "dates": f"{CASH_DATES[0]} to {CASH_DATES[1]}", "pax": PAX,
-               "searches": searches, "errors": errs, "cabins": cabins,
+               "searches": searches, "errors": errs, "cabins": merged,
+               "priceHistory": hist, "anomaly": _anomaly(hist, pdd),
                "fetchedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
         with open(CACHE, "w") as f:
             json.dump(out, f, indent=2)
         return out
-    except Exception as e:
+    except Exception:
         return _state()
 
 MOCK = {"best_flights": [{"price": 4180, "total_duration": 880, "flights": [

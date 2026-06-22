@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-06-22T15:16:48Z",
-  "scannerVersion": "0.4.0",
+  "lastUpdated": "2026-06-22T16:41:41Z",
+  "scannerVersion": "0.4.1",
   "window": {
     "outDepart": "Dec 17-26",
     "retDepart": "Dec 26 - Jan 4",
@@ -24,11 +24,11 @@
       "direct": true,
       "airlines": "DL",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GIG-VIX"
       },
       "bookEase": 1,
@@ -47,11 +47,11 @@
       "direct": true,
       "airlines": "DL",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
       "bookEase": 1,
@@ -70,11 +70,11 @@
       "direct": true,
       "airlines": "DL",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GIG-VIX"
       },
       "bookEase": 1,
@@ -93,11 +93,11 @@
       "direct": true,
       "airlines": "AA",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
       "bookEase": 3,
@@ -147,11 +147,11 @@
         "layoverOK": false,
         "path": "MCO-MIA-GRU"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
       "bookEase": 3,
@@ -201,11 +201,11 @@
         "layoverOK": true,
         "path": "MCO-PTY-GRU"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
       "bookEase": 1,
@@ -255,11 +255,11 @@
         "layoverOK": false,
         "path": "MCO-PTY-GRU"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
       "bookEase": 1,
@@ -278,11 +278,11 @@
       "direct": true,
       "airlines": "AA",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
       "bookEase": 2,
@@ -334,11 +334,11 @@
         "layoverOK": true,
         "path": "GRU-YYZ-ORD"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -388,11 +388,11 @@
         "layoverOK": true,
         "path": "GRU-YUL-ORD"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -442,11 +442,11 @@
         "layoverOK": false,
         "path": "GRU-YYZ-IAD"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -465,11 +465,11 @@
       "direct": true,
       "airlines": "UA",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -488,11 +488,11 @@
       "direct": true,
       "airlines": "UA",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -511,11 +511,11 @@
       "direct": true,
       "airlines": "DL",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GIG"
       },
       "bookEase": 1,
@@ -534,11 +534,11 @@
       "direct": true,
       "airlines": "DL",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -557,11 +557,11 @@
       "direct": true,
       "airlines": "DL",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -611,11 +611,11 @@
         "layoverOK": false,
         "path": "GRU-MEX-MCO"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 2,
@@ -665,11 +665,11 @@
         "layoverOK": false,
         "path": "GRU-MEX-MCO"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 2,
@@ -688,11 +688,11 @@
       "direct": true,
       "airlines": "LA",
       "routing": null,
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "bookEase": 1,
@@ -742,11 +742,11 @@
         "layoverOK": false,
         "path": "GIG-PTY-JFK"
       },
-      "extraPP": 80,
+      "extraPP": 105,
       "extra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GIG"
       },
       "bookEase": 1,
@@ -799,7 +799,7 @@
       "outExtra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GIG-VIX"
       },
       "retPath": "VIX-GRU-JFK-CHS",
@@ -811,11 +811,11 @@
       "retExtra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "totalMiles": 684900,
-      "totalExtraCash": 480,
+      "totalExtraCash": 630,
       "pax": 3,
       "nights": 7
     },
@@ -833,7 +833,7 @@
       "outExtra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
       "retPath": "VIX-GRU-MEX-MCO-CHS",
@@ -845,22 +845,26 @@
       "retExtra": {
         "positioning": 0,
         "posLeg": null,
-        "vixHop": 80,
+        "vixHop": 105,
         "vixLeg": "VIX-GRU"
       },
       "totalMiles": 559500,
-      "totalExtraCash": 480,
+      "totalExtraCash": 630,
       "pax": 3,
       "nights": 8
     }
   },
   "bestCash": {
     "source": "SerpApi Google Flights",
-    "asOf": "2026-06-21",
+    "asOf": "2026-06-22",
+    "premAsOf": "2026-06-22",
+    "fullAsOf": "2026-06-22",
     "dates": "2026-12-19 to 2026-12-30",
     "pax": 3,
-    "searches": 4,
-    "errors": [],
+    "searches": 6,
+    "errors": [
+      "first GIG: Google Flights hasn't returned any results for this query."
+    ],
     "cabins": {
       "premium": {
         "priceRaw": 12367,
@@ -876,30 +880,59 @@
         ],
         "gateway": "GIG",
         "totalForPax": 12367,
-        "vixRtPerPax": 160,
-        "doorToDoorTotal": 12847
+        "vixRtPerPax": 210,
+        "doorToDoorTotal": 12997
       },
       "business": {
-        "priceRaw": 17257,
-        "durationMin": 679,
+        "priceRaw": 16357,
+        "durationMin": 958,
         "stops": 1,
-        "path": "CHS-MIA-GIG",
-        "layoverOK": false,
+        "path": "CHS-LGA-GRU",
+        "layoverOK": true,
         "layovers": [
-          56
+          266
         ],
         "carriers": [
           "American"
         ],
-        "gateway": "GIG",
-        "totalForPax": 17257,
-        "vixRtPerPax": 160,
-        "doorToDoorTotal": 17737
+        "gateway": "GRU",
+        "totalForPax": 16357,
+        "vixRtPerPax": 210,
+        "doorToDoorTotal": 16987
+      },
+      "first": {
+        "priceRaw": 79501,
+        "durationMin": 1133,
+        "stops": 1,
+        "path": "CHS-MIA-GRU",
+        "layoverOK": false,
+        "layovers": [
+          505
+        ],
+        "carriers": [
+          "American"
+        ],
+        "gateway": "GRU",
+        "totalForPax": 79501,
+        "vixRtPerPax": 210,
+        "doorToDoorTotal": 80131
       }
     },
-    "fetchedAt": "2026-06-21T14:01:18Z"
+    "priceHistory": [
+      {
+        "date": "2026-06-22",
+        "premium": 12997
+      }
+    ],
+    "anomaly": null,
+    "fetchedAt": "2026-06-22T16:41:41Z"
   },
   "alerts": [
+    {
+      "type": "green",
+      "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>8</b> outbound / <b>12</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
+      "time": "2026-06-22 12:41 PM"
+    },
     {
       "type": "green",
       "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>8</b> outbound / <b>12</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
@@ -932,7 +965,7 @@
     }
   ],
   "errors": [],
-  "scanSeconds": 35.1,
+  "scanSeconds": 78.9,
   "history": [
     {
       "date": "2026-06-21",
@@ -950,9 +983,9 @@
       "premMiles": 684900,
       "bizMiles": 559500,
       "firstMiles": null,
-      "premCash": 12847,
-      "bizCash": 17737,
-      "firstCash": null,
+      "premCash": 12997,
+      "bizCash": 16987,
+      "firstCash": 80131,
       "outN": 8,
       "retN": 12
     }
