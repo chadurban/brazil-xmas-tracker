@@ -550,7 +550,13 @@ function renderBal(){
   }
   const bcp=LIVE&&LIVE.bestCash&&LIVE.bestCash.cabins&&LIVE.bestCash.cabins.premium;
   if(bcp&&bcp.doorToDoorTotal){ h+=`<div class="bal-head">Chase portal · Chase UR only</div>`+row('Premium via portal @1.5¢', Math.round(bcp.doorToDoorTotal/0.015), ur, ' UR'); }
-  h+=`<div class="note" style="margin-top:10px">UR <i>and</i> MR transfer 1:1 to Virgin Atlantic / Aeroplan / Flying Blue, so both count toward award space; the Chase <b>portal</b> draws Chase UR only.`;
+  // cash-out floor — always available (UR via Chase portal + MR via Schwab Platinum @1.1¢)
+  const urCashV=Math.round(ur*0.015), urBoostV=Math.round(ur*0.02), mrCashV=Math.round(mr*0.011);
+  h+=`<div class="bal-head">Cash-out floor · always available, no award space needed</div>`;
+  h+=`<div class="afford"><span>Chase UR → portal cash @1.5¢ <span class="muted">(to 2¢ Boost ${fmt$(urBoostV)})</span></span><span class="bal-tot">${fmt$(urCashV)}</span></div>`;
+  if(mr) h+=`<div class="afford"><span>Amex MR → Schwab cash @1.1¢ <span class="muted">(Schwab Platinum)</span></span><span class="bal-tot">${fmt$(mrCashV)}</span></div>`;
+  h+=`<div class="afford" style="border-color:var(--accent)"><span><b>Always-on cash from points</b></span><span class="bal-tot">${fmt$(urCashV+mrCashV)}</span></div>`;
+  h+=`<div class="note" style="margin-top:10px"><b>Value ladder:</b> award transfer ~4–5¢ ≫ UR portal 1.5–2¢ > MR→Schwab 1.1¢. UR <i>and</i> MR both transfer 1:1 to Virgin / Aeroplan / Flying Blue (award = best use); the Chase <b>portal</b> (UR) plus <b>MR→Schwab</b> are the always-available cash floors. If you cash out, burn <b>MR first</b> (worth least as cash); keep UR for the 1.5–2¢ portal.`;
   if(uracba) h+=` <br>+ ${uracba.toLocaleString()} <b>ACBA</b> Chase UR tracked separately (employer account — not added above).`;
   h+=`</div>`;
   $('#balSummary').innerHTML=h;
