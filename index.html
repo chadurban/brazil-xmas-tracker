@@ -86,7 +86,7 @@
 <script>
 const SCAN_DATA = {
   trip:{ origin:"CHS", anchor:"Vitória (VIX)", gateways:"GRU/GIG/VCP/CNF", pax:3,
-    cabinTarget:"Premium economy floor · business if affordable",
+    cabinTarget:"Premium economy floor · business if affordable", budget:10000,
     earliestDepart:"2026-12-17", latestReturn:"2027-01-04", minNights:7, maxNights:15,
     departRange:"Dec 17–26", returnRange:"Dec 26 – Jan 4",
     routing:"Open-jaw OK (arrive GIG, depart GRU, etc.) · US-hub agnostic · one-ways fine if cheaper",
@@ -429,17 +429,20 @@ function renderBuilder(){
       </div></div>`;
   });
   const vixRT=160, peDD=(cash.premEcon.pp+vixRT)*pax, bzDD=(cash.business.pp+vixRT)*pax;
-  const estCard=`<div class="opt"><div class="top"><span class="path">💵 Best Cash Option — door-to-door × 3 (estimate)</span><span class="miles">~$${peDD.toLocaleString()}–$${bzDD.toLocaleString()}</span></div>
+  const estCard=`<div class="opt"><div class="top"><span class="path">💳 Chase Travel Portal — cash via UR (estimate)</span><span class="miles">~$${peDD.toLocaleString()}–$${bzDD.toLocaleString()}</span></div>
     <div class="meta"><b>Prem econ ~$${peDD.toLocaleString()}</b> / business ~$${bzDD.toLocaleString()} for 3 — a CHS↔GRU cash through-fare already bundles US positioning, plus ~$160/pp round-trip VIX hops (Christmas-peak estimate). As UR-as-cash ~${fmtK(Math.round(peDD/0.015))}–${fmtK(Math.round(bzDD/0.015))} UR @1.5¢, so the <b>premium award (~360K mi) beats burning UR as cash</b>. ⚠ Estimate — add a SerpApi key to the secrets file for live Google-Flights pricing.</div></div>`;
   let cashCard=estCard;
   const bc=LIVE.bestCash;
   if(bc && bc.cabins && Object.keys(bc.cabins).length){
     const fmtLay=ls=>(ls||[]).map(m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')).join('/');
     const row=(cab,name)=>{const v=bc.cabins[cab]; if(!v)return ''; const tot=+(v.doorToDoorTotal||v.totalForPax||0);
-      return `<b>${name}:</b> ${v.path} · <b>$${tot.toLocaleString()}</b> for ${bc.pax} (incl ~$${v.vixRtPerPax}/pp VIX hops) · ${v.layoverOK?'✓ layover':'⚠ layover'}${v.layovers&&v.layovers.length?' '+fmtLay(v.layovers):''}${v.carriers&&v.carriers.length?' · '+v.carriers.join(', '):''} · ~${fmtK(Math.round(tot/0.015))} UR @1.5¢`;};
+      return `<b>${name}:</b> ${v.path} · <b>$${tot.toLocaleString()}</b> cash for ${bc.pax} → <b>${fmtK(Math.round(tot/0.015))} UR</b> @1.5¢ <span class="muted">(${fmtK(Math.round(tot/0.02))} @2¢ Boost)${v.carriers&&v.carriers.length?' · '+v.carriers.join(', '):''}</span>`;};
     const head=+(((bc.cabins.premium||{}).doorToDoorTotal)||((bc.cabins.business||{}).doorToDoorTotal)||0);
-    cashCard=`<div class="opt"><div class="top"><span class="path">💵 Best Cash Option — door-to-door × 3 (LIVE)</span><span class="miles">$${head.toLocaleString()}+</span></div>
-      <div class="meta">${[row('premium','Prem econ'),row('business','Business'),row('first','First')].filter(Boolean).join('<br>')}<br><span class="muted">Real Google Flights via SerpApi · ${bc.dates} · as of ${bc.asOf}</span></div></div>`;
+    const budget=t.budget||10000;
+    const budgetNote=head?`💡 <b>Premium cash ($${head.toLocaleString()}) ${head>budget?'is more than':'eats most of'} your whole ~$${(budget/1000)}k vacation budget</b> — paying with UR (this portal, or transferring to an award) keeps that $${(budget/1000)}k for lodging, food + activities.`:'';
+    cashCard=`<div class="opt"><div class="top"><span class="path">💳 Chase Travel Portal — cash fare, paid with UR</span><span class="miles">$${head.toLocaleString()}+</span></div>
+      <div class="meta">${[row('premium','Prem econ'),row('business','Business'),row('first','First')].filter(Boolean).join('<br>')}<br>
+      <span class="muted">ONE protected revenue ticket — bags checked through + delays covered (books CHS→gateway, sometimes all the way to CHS→VIX, on one fare). Real Google Flights via SerpApi · ${bc.dates} · as of ${bc.asOf}.</span><br>${budgetNote}</div></div>`;
   }
   $('#builder').innerHTML=blocks.join('')+cashCard;
 }
