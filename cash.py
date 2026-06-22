@@ -26,7 +26,7 @@ CASH_DATES = ("2026-12-19", "2026-12-30")        # representative depart/return 
 CABINS = {"premium": 2, "business": 3, "first": 4}            # SerpApi travel_class: 1 econ, 2 prem-econ, 3 business, 4 first
 LAY_MIN, LAY_MAX = 150, 360                       # Chad's layover window (minutes)
 MIN_DAYS_BETWEEN = 3                              # quota guard for the free tier
-VIX_HOP_CASH = 80                                 # one-way gateway<->VIX cash pp (still estimated; tiny + stable)
+VIX_HOP_CASH = 105                                # one-way gateway<->VIX cash pp (real: Jun-2026 LATAM premium-econ ran ~$108/pp/leg)
 
 def get_key():
     try:

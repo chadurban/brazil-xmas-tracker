@@ -72,7 +72,7 @@ HOME = "CHS"
 # estimated one-way cash to position CHS <-> US hub (economy, per person, USD). Refine with a real fare source.
 POSITION_COST = {"ATL":110,"CLT":90,"IAD":110,"MCO":110,"PHL":120,"FLL":120,"MIA":130,
                  "JFK":150,"EWR":150,"ORD":150,"DTW":150,"BOS":160,"IAH":170,"DFW":170,"LAX":230,"SFO":250}
-VIX_HOP_CASH = 80   # one-way gateway <-> VIX (GOL/Azul/LATAM economy, per person, USD)
+VIX_HOP_CASH = 105   # one-way gateway <-> VIX, per person (real: Jun-2026 LATAM premium-econ GIG-VIX + VIX-GRU ran ~$108/pp/leg)
 
 def leg_extra(direction, o, d):
     """Per-person cash beyond the award = the VIX hop only. CHS<->hub rides on the SAME single award ticket (protected),
