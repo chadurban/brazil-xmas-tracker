@@ -9,5 +9,16 @@
     "firstCash": null,
     "outN": 17,
     "retN": 12
+  },
+  {
+    "date": "2026-06-22",
+    "premMiles": 684900,
+    "bizMiles": null,
+    "firstMiles": null,
+    "premCash": 12847,
+    "bizCash": 17737,
+    "firstCash": null,
+    "outN": 5,
+    "retN": 6
   }
 ]
