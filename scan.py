@@ -26,7 +26,9 @@ HDR = {"Partner-Authorization": KEY, "Accept": "application/json", "User-Agent":
 
 # --- Trip config ---
 GATEWAYS = {"GRU", "GIG", "VCP", "CNF"}   # Brazil hubs w/ US nonstops + frequent VIX hops (São Paulo, Rio, Campinas, Belo Horizonte)
-US_HUBS = {"CHS","ATL","JFK","EWR","IAD","IAH","MIA","ORD","MCO","BOS","CLT","DFW","LAX","FLL","PHL","DTW","SFO"}
+US_HUBS = {"CHS","ATL","JFK","EWR","IAD","IAH","MIA","ORD","MCO","BOS","CLT","DFW","FLL","PHL","DTW"}   # eastern/central US gateways CHS sensibly connects through (no west-coast backtrack)
+# Connection points that mean a US->Brazil award is backtracking (via Europe / Mid-East / Asia / Africa) — drop these.
+BACKTRACK_HUBS = {"CDG","ORY","AMS","LHR","LGW","STN","MAN","MAD","BCN","LIS","OPO","FRA","MUC","DUS","FCO","MXP","ZRH","GVA","BRU","VIE","CPH","ARN","OSL","HEL","DUB","IST","SAW","DXB","AUH","DOH","ADD","CMN","JNB","NBO","CAI","TLV","HND","NRT","ICN","PEK","PVG","HKG","SIN","DEL","BOM","SFO","LAX","SEA","PDX"}
 OUT_START, OUT_END = "2026-12-17", "2026-12-27"   # outbound depart window (+buffer)
 RET_START, RET_END = "2026-12-24", "2027-01-04"   # return depart window
 LAY_MIN, LAY_MAX = 150, 360                        # minutes
@@ -73,15 +75,12 @@ POSITION_COST = {"ATL":110,"CLT":90,"IAD":110,"MCO":110,"PHL":120,"FLL":120,"MIA
 VIX_HOP_CASH = 80   # one-way gateway <-> VIX (GOL/Azul/LATAM economy, per person, USD)
 
 def leg_extra(direction, o, d):
-    """Per-person cash beyond the long-haul: CHS<->hub positioning (if not already home) + the VIX hop."""
+    """Per-person cash beyond the award = the VIX hop only. CHS<->hub rides on the SAME single award ticket (protected),
+    so there is no separate positioning cost — the program adds the CHS connection to the same booking."""
     if direction == "out":   # US hub -> gateway
-        pos = 0 if o == HOME else POSITION_COST.get(o, 150)
-        return pos + VIX_HOP_CASH, {"positioning":pos, "posLeg":(None if o==HOME else f"CHS-{o}"),
-                                    "vixHop":VIX_HOP_CASH, "vixLeg":f"{d}-VIX"}
+        return VIX_HOP_CASH, {"positioning": 0, "posLeg": None, "vixHop": VIX_HOP_CASH, "vixLeg": f"{d}-VIX"}
     else:                    # gateway -> US hub
-        pos = 0 if d == HOME else POSITION_COST.get(d, 150)
-        return pos + VIX_HOP_CASH, {"positioning":pos, "posLeg":(None if d==HOME else f"{d}-CHS"),
-                                    "vixHop":VIX_HOP_CASH, "vixLeg":f"VIX-{o}"}
+        return VIX_HOP_CASH, {"positioning": 0, "posLeg": None, "vixHop": VIX_HOP_CASH, "vixLeg": f"VIX-{o}"}
 
 def _full_path_out(o):
     core = o["routing"]["path"] if o.get("routing") else f'{o["o"]}-{o["d"]}'
@@ -228,6 +227,8 @@ def collect(direction, prev_rows=None):
                 k["stops"] = row_stops(k)
                 if k["stops"] > MAX_STOPS:
                     continue   # drop multi-stop long-hauls — prefer one long international flight
+                if k.get("routing") and any(a in BACKTRACK_HUBS for a in k["routing"].get("path", "").split("-")):
+                    continue   # drop geographically silly routings (CHS->SFO->CDG->GIG via Paris, etc.)
                 found.append(k)
     return found
 
@@ -263,7 +264,7 @@ def _path(r):
     return f'{r["o"]}-{r["d"]}'
 
 MIN_NIGHTS, MAX_NIGHTS = 7, 15
-MAX_STOPS = 0   # 0 = nonstop international only (book short CHS<->hub positioning + VIX hops separately)
+MAX_STOPS = 1   # international long-haul <=1 stop; the whole CHS->gateway journey books as ONE award ticket (protected)
 MAX_MILES = {"economy": 90000, "premium": 140000, "business": 220000, "first": 350000}  # drop non-saver/dynamic garbage (one-way)
 
 def _nights(a, b):
@@ -301,7 +302,7 @@ def _lowest_pair(outb, retb, cab):
             n = _nights(o["date"], r["date"])
             if n < MIN_NIGHTS or n > MAX_NIGHTS:
                 continue
-            m = int(o["miles"] or 9e9) + int(r["miles"] or 9e9)
+            m = eff_cost(o) + eff_cost(r)   # ease-weighted: prefer bookable + fewer-stop even in the splurge fallback
             if best is None or m < best[0]:
                 best = (m, o, r, n)
     return best
