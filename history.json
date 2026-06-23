@@ -20,5 +20,16 @@
     "firstCash": 80131,
     "outN": 8,
     "retN": 12
+  },
+  {
+    "date": "2026-06-23",
+    "premMiles": 360000,
+    "bizMiles": 802800,
+    "firstMiles": null,
+    "premCash": 12997,
+    "bizCash": 16987,
+    "firstCash": 80131,
+    "outN": 12,
+    "retN": 13
   }
 ]
