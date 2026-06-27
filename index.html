@@ -590,5 +590,18 @@ renderBal();
 // 2) Best-effort refresh from data.json if it is newer (harmless if it fails offline/cached).
 fetch('./data.json?'+Date.now()).then(r=>r.ok?r.json():null).then(d=>{ if(d&&d.lastUpdated&&(!LIVE||new Date(d.lastUpdated)>=new Date(LIVE.lastUpdated))){ applyData(d); if(Array.isArray(d.history)){HIST=d.history;} renderHistory(); } }).catch(()=>{});
 </script>
+<script>
+/* staleness monitor: warn if the daily scan has not refreshed in >2 days (catches a silently-down scanner) */
+(function(){ try{
+  var el=document.getElementById('live-data')||document.getElementById('cmp-data'); if(!el)return;
+  var d=JSON.parse(el.textContent||'{}'); if(!d.lastUpdated)return;
+  var days=Math.floor((Date.now()-new Date(d.lastUpdated).getTime())/86400000);
+  if(days>2){ var b=document.createElement('div');
+    b.style.cssText='background:#ff6b6b;color:#0f1117;text-align:center;padding:9px 12px;font-weight:700;font-size:0.82rem;border-radius:8px;margin:0 16px 12px;';
+    b.textContent='\u26a0 Data is '+days+' days old \u2014 the daily scanner may be down (check ~/Library/Logs).';
+    var c=document.querySelector('.wrap')||document.querySelector('.container')||document.body; c.insertBefore(b,c.firstChild);
+  }
+}catch(e){} })();
+</script>
 </body>
 </html>
