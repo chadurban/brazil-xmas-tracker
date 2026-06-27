@@ -42,7 +42,7 @@ BOOK_VIA = {
     "aeroplan":"UR/MR → Aeroplan","united":"UR → United","delta":"UR → Virgin Atlantic (Delta metal)",
     "aeromexico":"UR → Flying Blue / Virgin","american":"AA miles (not UR/MR)","alaska":"Alaska miles (not UR/MR)",
     "virginatlantic":"UR/MR → Virgin Atlantic","flyingblue":"UR/MR → Flying Blue",
-    "lifemiles":"Citi/Cap One → LifeMiles (not UR/MR)","smiles":"GOL Smiles","azul":"Azul / UR→United"}
+    "lifemiles":"MR → LifeMiles","smiles":"GOL Smiles","azul":"Azul / UR→United"}
 CABKEY = {"business":"J","premium":"W","economy":"Y","first":"F"}
 
 # Booking ease from Chad's points (Chase UR + Amex MR). Lower tier = simpler to book.
@@ -50,7 +50,7 @@ CABKEY = {"business":"J","premium":"W","economy":"Y","first":"F"}
 # tier 2 = reachable but via a SkyTeam/partner nuance.
 # tier 3 = NOT reachable from UR/MR (needs miles he doesn't hold) -> avoid.
 BOOK_EASE = {"united":1,"aeroplan":1,"virginatlantic":1,"flyingblue":1,"delta":1,
-             "aeromexico":2,"smiles":2,"azul":2,"american":3,"alaska":3,"lifemiles":3}
+             "aeromexico":2,"smiles":2,"azul":2,"american":3,"alaska":3,"lifemiles":1}
 STOP_PENALTY = 25000                       # "miles" an extra stop is worth avoiding
 TIER_PENALTY = {1:0, 2:30000, 3:400000}    # ease-of-booking penalty by tier
 
