@@ -113,10 +113,13 @@ def _full_path_ret(r):
 def notify(title, msg):
     """Push to Chad's phone via ntfy.sh; topic lives in the secrets JSON (never committed). Never raises."""
     try:
-        topic = json.load(open(SECRETS)).get("ntfy_topic")
+        sec = json.load(open(SECRETS))
+        topic = sec.get("ntfy_topic")
         if not topic: return
-        req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=msg.encode("utf-8"),
-                                     headers={"Title": title, "Priority": "high", "Tags": "airplane"})
+        hdrs = {"Title": title, "Priority": "high", "Tags": "airplane"}
+        if sec.get("ntfy_token"):
+            hdrs["Authorization"] = "Bearer " + sec["ntfy_token"]   # authenticated publish (account rate limits; survives a future topic reservation)
+        req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=msg.encode("utf-8"), headers=hdrs)
         urllib.request.urlopen(req, timeout=15)
     except Exception:
         pass
