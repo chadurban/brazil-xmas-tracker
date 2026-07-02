@@ -135,7 +135,7 @@ def best_cash(force=False):
         prev = _state() or {}
         today = date.today().isoformat()
         prev_cabins = dict(prev.get("cabins") or {})
-        fetch_prem = force or prev.get("premAsOf") != today
+        fetch_prem = force or _days_since(prev.get("premAsOf") or "") >= 3   # every 3 days (trip conditional since 7/02; frees quota for the Aug hub cash port)
         fetch_full = force or prev.get("fullAsOf") is None or _days_since(prev.get("fullAsOf")) >= FULL_EVERY
         want = (["premium"] if fetch_prem else []) + (["business", "first"] if fetch_full else [])
         if not want:
