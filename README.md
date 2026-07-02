@@ -2,7 +2,7 @@
 
 Award + cash tracker for the Urban family's Christmas-holiday trip to **Vitória (VIX), Brazil**.
 
-- **Window:** depart Dec 17–26 2026 · return Dec 26–Jan 4 2027 · 9–15 nights (flexes toward cheapest/most-available)
+- **Window:** depart Dec 17–26 2026 · return Dec 26–Jan 4 2027 · 7–15 nights (flexes toward cheapest/most-available)
 - **Travelers:** 3 (Chad, Kami, Clara)
 - **Cabin:** premium economy floor, business if affordable
 - **Anchor:** Vitória (VIX) via São Paulo (GRU) or Rio (GIG) gateway + a cheap domestic hop (no premium through-fares to VIX)
