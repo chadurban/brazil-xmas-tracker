@@ -24,6 +24,13 @@ KEY = json.load(open(SECRETS))["seats_aero_partner_authorization"]
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 HDR = {"Partner-Authorization": KEY, "Accept": "application/json", "User-Agent": UA}
 
+# ── SHARED CONFIG NOTES (all 3 flight scanners — keep in sync) ──────────────
+# * ANA is NOT a seats.aero source (HTTP 400) — do NOT add "ana"; NH metal surfaces via united/aeroplan.
+# * Avianca LifeMiles IS an Amex MR 1:1 partner (verified Jun 2026) — tier 1, "MR → LifeMiles".
+# * La Compagnie (EWR all-business) is INVISIBLE to Google Flights/SerpApi — watch lacompagnie.com manually.
+# * seats.aero Pro quota = 1000/day SHARED: japan 6:20, brazil-xmas 6:40, summer-2027 7:00.
+# * Push alerts: notify() → ntfy.sh topic from the secrets JSON ("ntfy_topic"); never commit the topic.
+
 # --- Trip config ---
 GATEWAYS = {"GRU", "GIG", "VCP", "CNF"}   # Brazil hubs w/ US nonstops + frequent VIX hops (São Paulo, Rio, Campinas, Belo Horizonte)
 US_HUBS = {"CHS","ATL","JFK","EWR","IAD","IAH","MIA","ORD","MCO","BOS","CLT","DFW","FLL","PHL","DTW"}   # eastern/central US gateways CHS sensibly connects through (no west-coast backtrack)
@@ -74,13 +81,26 @@ POSITION_COST = {"ATL":110,"CLT":90,"IAD":110,"MCO":110,"PHL":120,"FLL":120,"MIA
                  "JFK":150,"EWR":150,"ORD":150,"DTW":150,"BOS":160,"IAH":170,"DFW":170,"LAX":230,"SFO":250}
 VIX_HOP_CASH = 105   # one-way gateway <-> VIX, per person (real: Jun-2026 LATAM premium-econ GIG-VIX + VIX-GRU ran ~$108/pp/leg)
 
-def leg_extra(direction, o, d):
-    """Per-person cash beyond the award = the VIX hop only. CHS<->hub rides on the SAME single award ticket (protected),
-    so there is no separate positioning cost — the program adds the CHS connection to the same booking."""
-    if direction == "out":   # US hub -> gateway
-        return VIX_HOP_CASH, {"positioning": 0, "posLeg": None, "vixHop": VIX_HOP_CASH, "vixLeg": f"{d}-VIX"}
-    else:                    # gateway -> US hub
-        return VIX_HOP_CASH, {"positioning": 0, "posLeg": None, "vixHop": VIX_HOP_CASH, "vixLeg": f"VIX-{o}"}
+def can_fold_chs(source, airlines):
+    """Can this program ticket the CHS feeder on the SAME award (protected one-ticket)?
+    United/Aeroplan (UA serves CHS), Delta, AA/Alaska (AA serves CHS): yes.
+    Virgin/Flying Blue: only when the long-haul is Delta metal (they can add DL domestic feeders);
+    on LATAM/other metal the CHS leg needs a SEPARATE positioning ticket (the Condor scenario)."""
+    if source in {"united", "aeroplan", "delta", "american", "alaska"}: return True
+    if source in {"virginatlantic", "flyingblue"} and "DL" in (airlines or ""): return True
+    return False
+
+def leg_extra(direction, o, d, source=None, airlines=None):
+    """Per-person cash beyond the award: VIX hop always; PLUS a real positioning cost when the
+    program cannot fold CHS onto the same ticket (was blanket-$0 — silently violated the single-ticket rule)."""
+    hub = o if direction == "out" else d          # the US end of the long-haul
+    vix_leg = f"{d}-VIX" if direction == "out" else f"VIX-{o}"
+    if hub == HOME or can_fold_chs(source, airlines):
+        pos, pos_leg = 0, None
+    else:
+        pos = POSITION_COST.get(hub, 120)
+        pos_leg = f"CHS-{hub}" if direction == "out" else f"{hub}-CHS"
+    return pos + VIX_HOP_CASH, {"positioning": pos, "posLeg": pos_leg, "vixHop": VIX_HOP_CASH, "vixLeg": vix_leg}
 
 def _full_path_out(o):
     core = o["routing"]["path"] if o.get("routing") else f'{o["o"]}-{o["d"]}'
@@ -89,6 +109,17 @@ def _full_path_out(o):
 def _full_path_ret(r):
     core = r["routing"]["path"] if r.get("routing") else f'{r["o"]}-{r["d"]}'
     return ("VIX-" + core + ("" if r["d"]==HOME else "-CHS"))
+
+def notify(title, msg):
+    """Push to Chad's phone via ntfy.sh; topic lives in the secrets JSON (never committed). Never raises."""
+    try:
+        topic = json.load(open(SECRETS)).get("ntfy_topic")
+        if not topic: return
+        req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=msg.encode("utf-8"),
+                                     headers={"Title": title, "Priority": "high", "Tags": "airplane"})
+        urllib.request.urlopen(req, timeout=15)
+    except Exception:
+        pass
 
 errors = []
 REMAINING = None  # X-RateLimit-Remaining; seats.aero Pro cap is 1000 calls/day, resets 00:00 UTC
@@ -222,7 +253,7 @@ def collect(direction, prev_rows=None):
                     k["routing"] = best_trip(k["id"], cabin)
                 else:
                     continue   # nonstop-only mode: skip connecting records (also saves a trips API call)
-                k["extraPP"], k["extra"] = leg_extra(direction, k["o"], k["d"])
+                k["extraPP"], k["extra"] = leg_extra(direction, k["o"], k["d"], k["source"], k.get("airlines"))
                 k["bookEase"] = BOOK_EASE.get(source, 2)
                 k["stops"] = row_stops(k)
                 if k["stops"] > MAX_STOPS:
@@ -415,11 +446,26 @@ def main():
         pdd = ((best_cash.get("cabins") or {}).get("premium") or {}).get("doorToDoorTotal")
         why = "a new low since tracking began" if an.get("newLow") else f"{an.get('pctBelowMedian')}% below the {an.get('days',0)}-day norm (~${an.get('baseline'):,})"
         alerts = [{"type": "gold", "message": f"🔥 <b>POUNCE: premium-econ cash is cheap today.</b> ~${int(pdd):,} door-to-door for 3 ({why}). The daily cash watch flagged it; grab it if the trip's a go.", "time": datetime.now().strftime("%Y-%m-%d %I:%M %p")}] + alerts
+        notify("Brazil Xmas: cash POUNCE", f"Premium-econ ~${int(pdd):,} for 3 door-to-door ({why}). Check the tracker.")
     best_opt = build_best_option(outb, retb)
+    # push NEW booking-worthy events to Chad's phone (ntfy) — dashboards alone lost a trigger once
+    if not dry:
+        try:
+            prev_bo = (json.load(open(os.path.join(HERE, "data.json"))).get("bestOption") or {})
+        except Exception:
+            prev_bo = {}
+        bz, pbz = best_opt.get("business"), prev_bo.get("business")
+        if bz and bz.get("tier") == "ideal" and not (pbz and pbz.get("tier") == "ideal"):
+            notify("Brazil Xmas: business saver x3 FOUND",
+                   f"{bz['totalMiles']:,} mi RT for 3 via {bz['outVia']} / {bz['retVia']}. Scarce — check the tracker now.")
+        pm, ppm = best_opt.get("premium"), prev_bo.get("premium")
+        if pm and ppm and ppm.get("totalMiles") and pm["totalMiles"] <= 0.85 * ppm["totalMiles"]:
+            notify("Brazil Xmas: premium award DROPPED",
+                   f"Best premium RT now {pm['totalMiles']:,} mi for 3 (was {ppm['totalMiles']:,}).")
     data = {
         "lastUpdated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "scannerVersion": "0.4.1",
-        "window": {"outDepart":"Dec 17-26","retDepart":"Dec 26 - Jan 4","nights":"7-15"},
+        "window": {"outDepart":"Dec 17-26","retDepart":"Dec 24 - Jan 4","nights":"7-15"},
         "counts": {"outbound":len(outb),"return":len(retb),"vix":len(vix)},
         "outbound": outb, "return": retb, "vix": vix,
         "bestOption": best_opt, "bestCash": best_cash,
