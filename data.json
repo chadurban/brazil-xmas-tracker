@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-07-09T10:41:01Z",
+  "lastUpdated": "2026-07-10T10:41:23Z",
   "scannerVersion": "0.4.1",
   "window": {
     "outDepart": "Dec 17-26",
@@ -7,7 +7,7 @@
     "nights": "7-15"
   },
   "counts": {
-    "outbound": 9,
+    "outbound": 10,
     "return": 16,
     "vix": 5
   },
@@ -54,60 +54,6 @@
         ],
         "layoverOK": true,
         "path": "MCO-PTY-CNF"
-      },
-      "extraPP": 105,
-      "extra": {
-        "positioning": 0,
-        "posLeg": null,
-        "vixHop": 105,
-        "vixLeg": "CNF-VIX"
-      },
-      "bookEase": 1,
-      "stops": 1,
-      "bookVia": "UR/MR \u2192 Aeroplan"
-    },
-    {
-      "id": "37qdSJRnPYuSswAiwea9Rcx7pEF",
-      "source": "aeroplan",
-      "cabin": "business",
-      "o": "FLL",
-      "d": "CNF",
-      "date": "2026-12-25",
-      "miles": "50000",
-      "seats": 4,
-      "direct": false,
-      "airlines": "CM",
-      "routing": {
-        "stops": 1,
-        "miles": 50000,
-        "taxes": 8200,
-        "taxCur": "$",
-        "durationMin": 722,
-        "carriers": "CM",
-        "route": [
-          {
-            "from": "FLL",
-            "to": "PTY",
-            "flt": "CM266",
-            "dep": "2026-12-25T17:08:00Z",
-            "arr": "2026-12-25T20:19:00Z",
-            "ac": "Boeing 737 MAX 8"
-          },
-          {
-            "from": "PTY",
-            "to": "CNF",
-            "flt": "CM769",
-            "dep": "2026-12-25T22:17:00Z",
-            "arr": "2026-12-26T07:10:00Z",
-            "ac": "Boeing 737 MAX 8",
-            "layoverMin": 118
-          }
-        ],
-        "layovers": [
-          118
-        ],
-        "layoverOK": false,
-        "path": "FLL-PTY-CNF"
       },
       "extraPP": 105,
       "extra": {
@@ -242,6 +188,83 @@
       "bookEase": 1,
       "stops": 0,
       "bookVia": "UR \u2192 Virgin Atlantic (Delta metal)"
+    },
+    {
+      "id": "37rtW8siKRhuKBIphUJNr7G1TyW",
+      "source": "alaska",
+      "cabin": "business",
+      "o": "MIA",
+      "d": "GRU",
+      "date": "2026-12-24",
+      "miles": "50000",
+      "seats": 1,
+      "direct": true,
+      "airlines": "AA",
+      "routing": null,
+      "extraPP": 105,
+      "extra": {
+        "positioning": 0,
+        "posLeg": null,
+        "vixHop": 105,
+        "vixLeg": "GRU-VIX"
+      },
+      "bookEase": 3,
+      "stops": 0,
+      "bookVia": "Alaska miles (not UR/MR)"
+    },
+    {
+      "id": "37sRbL4Q9qUTy6v44gEmR0Ri8da",
+      "source": "alaska",
+      "cabin": "business",
+      "o": "MCO",
+      "d": "GRU",
+      "date": "2026-12-24",
+      "miles": "60000",
+      "seats": 1,
+      "direct": false,
+      "airlines": "AA",
+      "routing": {
+        "stops": 1,
+        "miles": 60000,
+        "taxes": 2560,
+        "taxCur": "$",
+        "durationMin": 1235,
+        "carriers": "AA",
+        "route": [
+          {
+            "from": "MCO",
+            "to": "MIA",
+            "flt": "AA2125",
+            "dep": "2026-12-24T07:45:00Z",
+            "arr": "2026-12-24T09:06:00Z",
+            "ac": "Boeing 737 MAX 8"
+          },
+          {
+            "from": "MIA",
+            "to": "GRU",
+            "flt": "AA929",
+            "dep": "2026-12-24T19:45:00Z",
+            "arr": "2026-12-25T06:20:00Z",
+            "ac": "Boeing 777-300ER",
+            "layoverMin": 639
+          }
+        ],
+        "layovers": [
+          639
+        ],
+        "layoverOK": false,
+        "path": "MCO-MIA-GRU"
+      },
+      "extraPP": 105,
+      "extra": {
+        "positioning": 0,
+        "posLeg": null,
+        "vixHop": 105,
+        "vixLeg": "GRU-VIX"
+      },
+      "bookEase": 3,
+      "stops": 1,
+      "bookVia": "Alaska miles (not UR/MR)"
     },
     {
       "id": "38WtCD01F22sIM0SAgiyi3IxH5d",
@@ -408,74 +431,20 @@
   ],
   "return": [
     {
-      "id": "382qXyrVsJlb7gCthjhit8fDZ23",
-      "source": "aeroplan",
-      "cabin": "business",
-      "o": "CNF",
-      "d": "MCO",
-      "date": "2026-12-30",
-      "miles": "50000",
-      "seats": 4,
-      "direct": false,
-      "airlines": "CM",
-      "routing": {
-        "stops": 1,
-        "miles": 50000,
-        "taxes": 11920,
-        "taxCur": "$",
-        "durationMin": 967,
-        "carriers": "CM",
-        "route": [
-          {
-            "from": "CNF",
-            "to": "PTY",
-            "flt": "CM855",
-            "dep": "2026-12-30T08:15:00Z",
-            "arr": "2026-12-30T13:03:00Z",
-            "ac": "Boeing 737 MAX 8"
-          },
-          {
-            "from": "PTY",
-            "to": "MCO",
-            "flt": "CM434",
-            "dep": "2026-12-30T18:39:00Z",
-            "arr": "2026-12-30T22:22:00Z",
-            "ac": "Boeing 737-800",
-            "layoverMin": 336
-          }
-        ],
-        "layovers": [
-          336
-        ],
-        "layoverOK": true,
-        "path": "CNF-PTY-MCO"
-      },
-      "extraPP": 105,
-      "extra": {
-        "positioning": 0,
-        "posLeg": null,
-        "vixHop": 105,
-        "vixLeg": "VIX-CNF"
-      },
-      "bookEase": 1,
-      "stops": 1,
-      "bookVia": "UR/MR \u2192 Aeroplan"
-    },
-    {
       "id": "37k3YjsqNTrOOdSEEYvFpc7ci3V",
       "source": "aeroplan",
       "cabin": "business",
       "o": "GRU",
       "d": "ORD",
       "date": "2026-12-24",
-      "miles": "170800",
+      "miles": "169900",
       "seats": 6,
       "direct": false,
       "airlines": "AC",
       "routing": {
         "stops": 1,
         "miles": 186800,
-        "taxes": 8800,
+        "taxes": 8820,
         "taxCur": "$",
         "durationMin": 1123,
         "carriers": "AC",
@@ -522,14 +491,14 @@
       "o": "GRU",
       "d": "ORD",
       "date": "2026-12-25",
-      "miles": "173800",
-      "seats": 8,
+      "miles": "175700",
+      "seats": 9,
       "direct": false,
       "airlines": "AC",
       "routing": {
         "stops": 1,
-        "miles": 177100,
-        "taxes": 8130,
+        "miles": 186800,
+        "taxes": 8150,
         "taxCur": "$",
         "durationMin": 982,
         "carriers": "AC",
@@ -570,11 +539,65 @@
       "bookVia": "UR/MR \u2192 Aeroplan"
     },
     {
-      "id": "38rWX84Av8oE7GQitZirZX5MnbV",
+      "id": "37x7Upvx0H8MDpY808StBTPyV0A",
+      "source": "aeroplan",
+      "cabin": "business",
+      "o": "GRU",
+      "d": "IAD",
+      "date": "2026-12-28",
+      "miles": "179800",
+      "seats": 3,
+      "direct": false,
+      "airlines": "AC",
+      "routing": {
+        "stops": 1,
+        "miles": 185300,
+        "taxes": 8820,
+        "taxCur": "$",
+        "durationMin": 1480,
+        "carriers": "AC",
+        "route": [
+          {
+            "from": "GRU",
+            "to": "YYZ",
+            "flt": "AC91",
+            "dep": "2026-12-28T21:30:00Z",
+            "arr": "2026-12-29T05:50:00Z",
+            "ac": "Boeing 787-9"
+          },
+          {
+            "from": "YYZ",
+            "to": "IAD",
+            "flt": "AC8620",
+            "dep": "2026-12-29T18:40:00Z",
+            "arr": "2026-12-29T20:10:00Z",
+            "ac": "Bombardier CRJ900",
+            "layoverMin": 770
+          }
+        ],
+        "layovers": [
+          770
+        ],
+        "layoverOK": false,
+        "path": "GRU-YYZ-IAD"
+      },
+      "extraPP": 105,
+      "extra": {
+        "positioning": 0,
+        "posLeg": null,
+        "vixHop": 105,
+        "vixLeg": "VIX-GRU"
+      },
+      "bookEase": 1,
+      "stops": 1,
+      "bookVia": "UR/MR \u2192 Aeroplan"
+    },
+    {
+      "id": "38rWW1KQeuZCzQ9kTF1LBGfksp4",
       "source": "united",
       "cabin": "premium",
       "o": "GRU",
-      "d": "ORD",
+      "d": "IAH",
       "date": "2026-12-24",
       "miles": "55000",
       "seats": 9,
@@ -593,11 +616,11 @@
       "bookVia": "UR \u2192 United"
     },
     {
-      "id": "38rWW1KQeuZCzQ9kTF1LBGfksp4",
+      "id": "38rWX84Av8oE7GQitZirZX5MnbV",
       "source": "united",
       "cabin": "premium",
       "o": "GRU",
-      "d": "IAH",
+      "d": "ORD",
       "date": "2026-12-24",
       "miles": "55000",
       "seats": 9,
@@ -893,60 +916,6 @@
       "bookVia": "UR/MR \u2192 Virgin Atlantic"
     },
     {
-      "id": "38rglobC0y7wVxVh3zhZ5fEzHdh",
-      "source": "virginatlantic",
-      "cabin": "premium",
-      "o": "GRU",
-      "d": "MIA",
-      "date": "2026-12-24",
-      "miles": "65000",
-      "seats": 9,
-      "direct": false,
-      "airlines": "LA",
-      "routing": {
-        "stops": 1,
-        "miles": 65000,
-        "taxes": 3073,
-        "taxCur": "$",
-        "durationMin": 880,
-        "carriers": "LA, LA",
-        "route": [
-          {
-            "from": "GRU",
-            "to": "BOG",
-            "flt": "LA8212",
-            "dep": "2026-12-24T23:55:00Z",
-            "arr": "2026-12-25T04:00:00Z",
-            "ac": "Airbus A320"
-          },
-          {
-            "from": "BOG",
-            "to": "MIA",
-            "flt": "LA4400",
-            "dep": "2026-12-25T08:35:00Z",
-            "arr": "2026-12-25T12:35:00Z",
-            "ac": "Airbus A320",
-            "layoverMin": 275
-          }
-        ],
-        "layovers": [
-          275
-        ],
-        "layoverOK": true,
-        "path": "GRU-BOG-MIA"
-      },
-      "extraPP": 235,
-      "extra": {
-        "positioning": 130,
-        "posLeg": "MIA-CHS",
-        "vixHop": 105,
-        "vixLeg": "VIX-GRU"
-      },
-      "bookEase": 1,
-      "stops": 1,
-      "bookVia": "UR/MR \u2192 Virgin Atlantic"
-    },
-    {
       "id": "38rgp54qCS5PiOdjS0AFIs0jZxc",
       "source": "virginatlantic",
       "cabin": "premium",
@@ -960,7 +929,7 @@
       "routing": {
         "stops": 1,
         "miles": 65000,
-        "taxes": 3073,
+        "taxes": 3083,
         "taxCur": "$",
         "durationMin": 920,
         "carriers": "LA, LA",
@@ -1001,6 +970,60 @@
       "bookVia": "UR/MR \u2192 Virgin Atlantic"
     },
     {
+      "id": "38rglobC0y7wVxVh3zhZ5fEzHdh",
+      "source": "virginatlantic",
+      "cabin": "premium",
+      "o": "GRU",
+      "d": "MIA",
+      "date": "2026-12-24",
+      "miles": "65000",
+      "seats": 9,
+      "direct": false,
+      "airlines": "LA",
+      "routing": {
+        "stops": 1,
+        "miles": 65000,
+        "taxes": 3083,
+        "taxCur": "$",
+        "durationMin": 880,
+        "carriers": "LA, LA",
+        "route": [
+          {
+            "from": "GRU",
+            "to": "BOG",
+            "flt": "LA8212",
+            "dep": "2026-12-24T23:55:00Z",
+            "arr": "2026-12-25T04:00:00Z",
+            "ac": "Airbus A320"
+          },
+          {
+            "from": "BOG",
+            "to": "MIA",
+            "flt": "LA4400",
+            "dep": "2026-12-25T08:35:00Z",
+            "arr": "2026-12-25T12:35:00Z",
+            "ac": "Airbus A320",
+            "layoverMin": 275
+          }
+        ],
+        "layovers": [
+          275
+        ],
+        "layoverOK": true,
+        "path": "GRU-BOG-MIA"
+      },
+      "extraPP": 235,
+      "extra": {
+        "positioning": 130,
+        "posLeg": "MIA-CHS",
+        "vixHop": 105,
+        "vixLeg": "VIX-GRU"
+      },
+      "bookEase": 1,
+      "stops": 1,
+      "bookVia": "UR/MR \u2192 Virgin Atlantic"
+    },
+    {
       "id": "38ucw6qpTVCijpsFWKkSwaC6gOG",
       "source": "virginatlantic",
       "cabin": "premium",
@@ -1014,7 +1037,7 @@
       "routing": {
         "stops": 1,
         "miles": 65000,
-        "taxes": 3073,
+        "taxes": 3083,
         "taxCur": "$",
         "durationMin": 1015,
         "carriers": "LA, LA",
@@ -1108,8 +1131,8 @@
         "vixHop": 105,
         "vixLeg": "GRU-VIX"
       },
-      "retPath": "VIX-GRU-ORD-CHS",
-      "retLong": "GRU-ORD",
+      "retPath": "VIX-GRU-IAH-CHS",
+      "retLong": "GRU-IAH",
       "retDate": "2026-12-24",
       "retMiles": 55000,
       "retSeats": 9,
@@ -1126,8 +1149,10 @@
       "nights": 7
     },
     "business": {
-      "tier": "ideal",
-      "caveats": [],
+      "tier": "lowest",
+      "caveats": [
+        "back layover off"
+      ],
       "outPath": "CHS-MCO-PTY-CNF-VIX",
       "outLong": "MCO-PTY-CNF",
       "outDate": "2026-12-20",
@@ -1140,33 +1165,35 @@
         "vixHop": 105,
         "vixLeg": "CNF-VIX"
       },
-      "retPath": "VIX-CNF-PTY-MCO-CHS",
-      "retLong": "CNF-PTY-MCO",
-      "retDate": "2026-12-30",
-      "retMiles": 50000,
-      "retSeats": 4,
+      "retPath": "VIX-GRU-YYZ-IAD-CHS",
+      "retLong": "GRU-YYZ-IAD",
+      "retDate": "2026-12-28",
+      "retMiles": 179800,
+      "retSeats": 3,
       "retVia": "UR/MR \u2192 Aeroplan",
       "retExtra": {
         "positioning": 0,
         "posLeg": null,
         "vixHop": 105,
-        "vixLeg": "VIX-CNF"
+        "vixLeg": "VIX-GRU"
       },
-      "totalMiles": 300000,
+      "totalMiles": 689400,
       "totalExtraCash": 630,
       "pax": 3,
-      "nights": 10
+      "nights": 8
     }
   },
   "bestCash": {
     "source": "SerpApi Google Flights",
-    "asOf": "2026-07-08",
+    "asOf": "2026-07-10",
     "premAsOf": "2026-07-08",
-    "fullAsOf": "2026-07-04",
+    "fullAsOf": "2026-07-10",
     "dates": "2026-12-19 to 2026-12-30",
     "pax": 3,
-    "searches": 2,
-    "errors": [],
+    "searches": 4,
+    "errors": [
+      "first GIG: Google Flights hasn't returned any results for this query."
+    ],
     "cabins": {
       "premium": {
         "priceRaw": 12367,
@@ -1276,6 +1303,10 @@
       {
         "date": "2026-07-08",
         "premium": 12997
+      },
+      {
+        "date": "2026-07-10",
+        "premium": 12997
       }
     ],
     "anomaly": {
@@ -1284,11 +1315,16 @@
       "pctBelowMedian": 0,
       "newLow": false,
       "pounce": false,
-      "days": 14
+      "days": 15
     },
-    "fetchedAt": "2026-07-08T10:41:10Z"
+    "fetchedAt": "2026-07-10T10:41:23Z"
   },
   "alerts": [
+    {
+      "type": "green",
+      "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>10</b> outbound / <b>16</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-IAH 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
+      "time": "2026-07-10 06:41 AM"
+    },
     {
       "type": "green",
       "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>9</b> outbound / <b>16</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-ORD 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business 10-night 3-seat combo also live: 300,000 mi. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
@@ -1318,15 +1354,10 @@
       "type": "green",
       "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>9</b> outbound / <b>15</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MCO-BOG-GRU 2026-12-17 \u2192 GRU-IAD 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
       "time": "2026-07-04 06:41 AM"
-    },
-    {
-      "type": "green",
-      "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>9</b> outbound / <b>13</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MCO-BOG-GRU 2026-12-17 \u2192 GRU-IAD 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
-      "time": "2026-07-03 06:41 AM"
     }
   ],
   "errors": [],
-  "scanSeconds": 56.6,
+  "scanSeconds": 77.7,
   "history": [
     {
       "date": "2026-06-21",
@@ -1535,6 +1566,17 @@
       "bizCash": 16987,
       "firstCash": 80131,
       "outN": 9,
+      "retN": 16
+    },
+    {
+      "date": "2026-07-10",
+      "premMiles": 360000,
+      "bizMiles": 689400,
+      "firstMiles": null,
+      "premCash": 12997,
+      "bizCash": 16987,
+      "firstCash": 80131,
+      "outN": 10,
       "retN": 16
     }
   ]
