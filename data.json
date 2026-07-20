@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-07-19T10:41:17Z",
+  "lastUpdated": "2026-07-20T10:41:06Z",
   "scannerVersion": "0.4.1",
   "window": {
     "outDepart": "Dec 17-26",
@@ -383,14 +383,14 @@
       "o": "GRU",
       "d": "IAD",
       "date": "2026-12-24",
-      "miles": "179900",
+      "miles": "180700",
       "seats": 1,
       "direct": false,
       "airlines": "AC",
       "routing": {
         "stops": 1,
-        "miles": 187100,
-        "taxes": 8910,
+        "miles": 187500,
+        "taxes": 8870,
         "taxCur": "$",
         "durationMin": 1215,
         "carriers": "AC",
@@ -483,8 +483,8 @@
       "o": "GIG",
       "d": "JFK",
       "date": "2026-12-24",
-      "miles": "92000",
-      "seats": 6,
+      "miles": "76000",
+      "seats": 5,
       "direct": true,
       "airlines": "DL",
       "routing": null,
@@ -715,7 +715,7 @@
       "d": "BOS",
       "date": "2026-12-24",
       "miles": "95000",
-      "seats": 3,
+      "seats": 1,
       "direct": true,
       "airlines": "LA",
       "routing": null,
@@ -1118,6 +1118,11 @@
     {
       "type": "green",
       "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>7</b> outbound / <b>15</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-ORD 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
+      "time": "2026-07-20 06:41 AM"
+    },
+    {
+      "type": "green",
+      "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>7</b> outbound / <b>15</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-ORD 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
       "time": "2026-07-19 06:41 AM"
     },
     {
@@ -1144,15 +1149,10 @@
       "type": "green",
       "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>5</b> outbound / <b>15</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-IAH 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
       "time": "2026-07-16 06:41 AM"
-    },
-    {
-      "type": "gold",
-      "message": "\ud83d\udd25 <b>POUNCE: premium-econ cash is cheap today.</b> ~$10,219 door-to-door for 3 (a new low since tracking began). The daily cash watch flagged it; grab it if the trip's a go.",
-      "time": "2026-07-15 06:41 AM"
     }
   ],
   "errors": [],
-  "scanSeconds": 75.9,
+  "scanSeconds": 61.3,
   "history": [
     {
       "date": "2026-06-21",
@@ -1453,6 +1453,17 @@
     },
     {
       "date": "2026-07-19",
+      "premMiles": 360000,
+      "bizMiles": null,
+      "firstMiles": null,
+      "premCash": 11452,
+      "bizCash": 17290,
+      "firstCash": 80134,
+      "outN": 7,
+      "retN": 15
+    },
+    {
+      "date": "2026-07-20",
       "premMiles": 360000,
       "bizMiles": null,
       "firstMiles": null,
