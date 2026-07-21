@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-07-20T10:41:06Z",
+  "lastUpdated": "2026-07-21T10:41:14Z",
   "scannerVersion": "0.4.1",
   "window": {
     "outDepart": "Dec 17-26",
@@ -276,7 +276,7 @@
       "d": "ORD",
       "date": "2026-12-24",
       "miles": "173200",
-      "seats": 7,
+      "seats": 8,
       "direct": false,
       "airlines": "AC",
       "routing": {
@@ -483,8 +483,8 @@
       "o": "GIG",
       "d": "JFK",
       "date": "2026-12-24",
-      "miles": "76000",
-      "seats": 5,
+      "miles": "98000",
+      "seats": 9,
       "direct": true,
       "airlines": "DL",
       "routing": null,
@@ -507,7 +507,7 @@
       "d": "JFK",
       "date": "2026-12-29",
       "miles": "98000",
-      "seats": 9,
+      "seats": 3,
       "direct": true,
       "airlines": "DL",
       "routing": null,
@@ -744,7 +744,7 @@
       "routing": {
         "stops": 1,
         "miles": 65000,
-        "taxes": 3163,
+        "taxes": 3173,
         "taxCur": "$",
         "durationMin": 880,
         "carriers": "LA, LA",
@@ -798,7 +798,7 @@
       "routing": {
         "stops": 1,
         "miles": 65000,
-        "taxes": 3163,
+        "taxes": 3173,
         "taxCur": "$",
         "durationMin": 920,
         "carriers": "LA, LA",
@@ -852,7 +852,7 @@
       "routing": {
         "stops": 1,
         "miles": 65000,
-        "taxes": 3163,
+        "taxes": 3173,
         "taxCur": "$",
         "durationMin": 880,
         "carriers": "LA, LA",
@@ -966,8 +966,8 @@
   },
   "bestCash": {
     "source": "SerpApi Google Flights",
-    "asOf": "2026-07-18",
-    "premAsOf": "2026-07-18",
+    "asOf": "2026-07-21",
+    "premAsOf": "2026-07-21",
     "fullAsOf": "2026-07-16",
     "dates": "2026-12-19 to 2026-12-30",
     "pax": 3,
@@ -1102,6 +1102,10 @@
       {
         "date": "2026-07-18",
         "premium": 11452
+      },
+      {
+        "date": "2026-07-21",
+        "premium": 11452
       }
     ],
     "anomaly": {
@@ -1110,11 +1114,16 @@
       "pctBelowMedian": 12,
       "newLow": false,
       "pounce": false,
-      "days": 19
+      "days": 20
     },
-    "fetchedAt": "2026-07-18T10:41:24Z"
+    "fetchedAt": "2026-07-21T10:41:14Z"
   },
   "alerts": [
+    {
+      "type": "green",
+      "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>7</b> outbound / <b>15</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-ORD 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
+      "time": "2026-07-21 06:41 AM"
+    },
     {
       "type": "green",
       "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>7</b> outbound / <b>15</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-ORD 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
@@ -1144,15 +1153,10 @@
       "type": "gold",
       "message": "\ud83d\udd25 <b>POUNCE: premium-econ cash is cheap today.</b> ~$10,219 door-to-door for 3 (21% below the 18-day norm (~$12,997)). The daily cash watch flagged it; grab it if the trip's a go.",
       "time": "2026-07-16 06:41 AM"
-    },
-    {
-      "type": "green",
-      "message": "\ud83d\udfe2 Scan v0.4 \u2014 <b>5</b> outbound / <b>15</b> return award options (US hubs \u2194 GRU/GIG, Dec 17\u2013Jan 4). <b>Best premium-econ RT (3 pax, \u22653 seats, layover-OK, 7-night):</b> MIA-BOG-GRU 2026-12-17 \u2192 GRU-IAH 2026-12-24 = <b>360,000 mi</b> (UR/MR \u2192 Virgin Atlantic / UR \u2192 United). Business saver for 3 (valid length) still scarce (Christmas peak) \u2014 hunting daily. VIX hop: GIG-VIX ~8,200 GOL Smiles or ~$60 cash.",
-      "time": "2026-07-16 06:41 AM"
     }
   ],
   "errors": [],
-  "scanSeconds": 61.3,
+  "scanSeconds": 69.4,
   "history": [
     {
       "date": "2026-06-21",
@@ -1464,6 +1468,17 @@
     },
     {
       "date": "2026-07-20",
+      "premMiles": 360000,
+      "bizMiles": null,
+      "firstMiles": null,
+      "premCash": 11452,
+      "bizCash": 17290,
+      "firstCash": 80134,
+      "outN": 7,
+      "retN": 15
+    },
+    {
+      "date": "2026-07-21",
       "premMiles": 360000,
       "bizMiles": null,
       "firstMiles": null,
